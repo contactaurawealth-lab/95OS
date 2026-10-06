@@ -410,7 +410,7 @@ fun SettingsScreen(
                         )
                         Spacer(modifier = Modifier.height(spacing.xs))
                         Text(
-                            text = "Version 2.3.0 (The Offline Exam Operating System)",
+                            text = "Version 2.3.1 (The Offline Exam Operating System)",
                             style = typography.caption,
                             color = colors.mutedText
                         )
