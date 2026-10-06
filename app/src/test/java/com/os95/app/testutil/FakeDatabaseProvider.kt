@@ -1,6 +1,7 @@
 package com.os95.app.testutil
 
 import com.os95.app.core.database.DatabaseProvider
+import com.os95.app.core.database.dao.FormulaDao
 import com.os95.app.core.database.dao.MistakeDao
 import com.os95.app.core.database.dao.PaperPilotDao
 import com.os95.app.core.database.dao.RecallDao
@@ -10,6 +11,7 @@ import com.os95.app.core.database.dao.StudySessionDao
 import com.os95.app.core.database.dao.SyllabusDao
 import com.os95.app.core.database.entity.ChapterEntity
 import com.os95.app.core.database.entity.ExamResultEntity
+import com.os95.app.core.database.entity.FormulaEntity
 import com.os95.app.core.database.entity.LostMarksEntity
 import com.os95.app.core.database.entity.MistakeEntity
 import com.os95.app.core.database.entity.PaperEntity
@@ -36,6 +38,7 @@ class FakeDatabaseProvider : DatabaseProvider {
     val fakeStudySessionDao = FakeStudySessionDao()
     val fakeStudentDao = FakeStudentDao()
     val fakeStudyPreferencesDao = FakeStudyPreferencesDao()
+    val fakeFormulaDao = FakeFormulaDao()
 
     override fun studentDao(): StudentDao = fakeStudentDao
     override fun studyPreferencesDao(): StudyPreferencesDao = fakeStudyPreferencesDao
@@ -44,6 +47,7 @@ class FakeDatabaseProvider : DatabaseProvider {
     override fun mistakeDao(): MistakeDao = fakeMistakeDao
     override fun recallDao(): RecallDao = fakeRecallDao
     override fun studySessionDao(): StudySessionDao = fakeStudySessionDao
+    override fun formulaDao(): FormulaDao = fakeFormulaDao
 
     override suspend fun <R> runInTransaction(block: suspend () -> R): R = block()
 
@@ -53,6 +57,7 @@ class FakeDatabaseProvider : DatabaseProvider {
         fakeMistakeDao.clear()
         fakeRecallDao.clear()
         fakeStudySessionDao.clear()
+        fakeFormulaDao.clear()
     }
 }
 
@@ -152,6 +157,12 @@ class FakeSyllabusDao : SyllabusDao {
     override suspend fun updateTopicWeakness(topicId: String, weaknessScore: Float) {
         topics.value = topics.value.map {
             if (it.id == topicId) it.copy(weaknessScore = weaknessScore) else it
+        }
+    }
+
+    override suspend fun updateMasteryForChapter(chapterId: String, masteryState: String) {
+        topics.value = topics.value.map {
+            if (it.chapterId == chapterId) it.copy(masteryState = masteryState) else it
         }
     }
 
@@ -416,3 +427,46 @@ class FakeStudyPreferencesDao : StudyPreferencesDao {
     override suspend fun getPreferences(): StudyPreferencesEntity? = preferences.value
     override suspend fun savePreferences(prefs: StudyPreferencesEntity) { preferences.value = prefs }
 }
+
+class FakeFormulaDao : FormulaDao {
+    private val formulas = MutableStateFlow<List<FormulaEntity>>(emptyList())
+
+    fun clear() { formulas.value = emptyList() }
+
+    override fun getAllFormulas(): Flow<List<FormulaEntity>> = formulas.asStateFlow()
+
+    override suspend fun getAllFormulasSync(): List<FormulaEntity> = formulas.value
+
+    override fun getFormulasBySubject(subjectId: String): Flow<List<FormulaEntity>> =
+        formulas.map { list -> list.filter { it.subjectId == subjectId } }
+
+    override fun getFormulasByChapter(chapterId: String): Flow<List<FormulaEntity>> =
+        formulas.map { list -> list.filter { it.chapterId == chapterId } }
+
+    override fun getBookmarkedFormulas(): Flow<List<FormulaEntity>> =
+        formulas.map { list -> list.filter { it.isBookmarked } }
+
+    override suspend fun insertFormula(formula: FormulaEntity) {
+        formulas.value = formulas.value.filter { it.id != formula.id } + formula
+    }
+
+    override suspend fun insertFormulas(formulasList: List<FormulaEntity>) {
+        val ids = formulasList.map { it.id }.toSet()
+        formulas.value = formulas.value.filter { it.id !in ids } + formulasList
+    }
+
+    override suspend fun updateFormula(formula: FormulaEntity) {
+        formulas.value = formulas.value.map { if (it.id == formula.id) formula else it }
+    }
+
+    override suspend fun toggleBookmark(formulaId: String, isBookmarked: Boolean) {
+        formulas.value = formulas.value.map {
+            if (it.id == formulaId) it.copy(isBookmarked = isBookmarked) else it
+        }
+    }
+
+    override suspend fun deleteFormula(formula: FormulaEntity) {
+        formulas.value = formulas.value.filter { it.id != formula.id }
+    }
+}
+

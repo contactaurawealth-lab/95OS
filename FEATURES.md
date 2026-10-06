@@ -115,3 +115,20 @@
   3. **18+ Subject Catalog & 7-Step Onboarding:** 18 predefined subjects across STEM, Commerce, Humanities, and Languages with one-tap stream presets (`PCM`, `PCB`, `Commerce`, `Humanities`), custom subject addition, board benchmarks, and daily study habit commitments.
   4. **Universal Markdown (`.md`) Portability Engine:** Bidirectional parser and exporter for Syllabus, Question Banks, Recall Cards, and Mistake Banks formatted as clean Markdown documents with checkbox states, headers, and bullet metadata, plus dual-format UI toggle and clipboard support.
 - **Status:** Production Implementation.
+
+---
+
+### 1.13 Advanced Offline Instrumentation & Exam Protocol
+- **Role:** Complete academic data sovereignty, physical exam printouts, visual consistency analytics, formula reference vaulting, zero-panic exam morning protocols, and procedural offline cognitive audio.
+- **Components:**
+  1. **Full Database Sovereignty Backup & Restore (.95os):** Raw Room SQLite database backup and restore via Storage Access Framework (SAF) with WAL flushing (`PRAGMA wal_checkpoint(FULL);`), binary header verification (`SQLite format 3`), and safe atomic file swap.
+  2. **Session Navigation Safety:** Jetpack Compose `BackHandler` protections for active sessions in `ExamSimulatorScreen`, `AdaptiveRetestScreen`, and `FocusScreen` with confirmation modal dialogs preventing accidental progress loss.
+  3. **Syllabus Batch Mastery Progression:** Chapter-level "Revise All" and "Master All" batch actions executing atomic Room SQL updates across all child topics.
+  4. **Printable Revision Documents:** `RevisionDocumentGenerator` generating standardized A4 PDF and Markdown sheets for Mistake Remediation (root-cause categorized) and High-Yield Forgetting Flash Sheets.
+  5. **Longitudinal Study Consistency & Mastery Heatmap:** 70-day (10-week) visual study grid in `ProgressScreen` categorizing daily focus volumes (0m, 1–30m, 31–60m, 61–120m, 120m+) with streak tracking.
+  6. **Target Score Sensitivity ("What-If") Calculator:** Dynamic marks sensitivity simulation slider in `ProgressScreen` projecting real-time percentage and marks gap changes from targeted topic recoveries.
+  7. **Formula & Key Definition Vault:** Dedicated formula and law management screen (`FormulaVaultScreen`) with subject filtering, monospace equation formatting, explanation notes, and bookmarking.
+  8. **"T-Minus 3 Hours" Exam Day Protocol:** Pre-exam morning operational suite with a logistics checklist, departure/arrival timeline, and 5-card cognitive priming with an interactive 4-4-4-4 box breathing engine.
+  9. **100% Offline Procedural Focus Audio Generator:** Real-time PCM audio synthesis using Android `AudioTrack` (Brownian noise, Pink noise, and Analog Exam Clock Tick) with 0 KB asset files operating under Airplane Mode.
+- **Status:** Production Implementation.
+

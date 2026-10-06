@@ -351,5 +351,44 @@ The Advanced Exam Intelligence layer (`AdvancedExamEngine.kt` + `OfflineAdvanced
   - Formats headers (`# Subject`, `## Chapter`, `### Mistake / Card`), task checkboxes (`- [x] Topic`), and metadata bullet keys (`- Question:`, `- Answer:`, `- Marks:`, `- Difficulty:`).
   - Dual format switcher in `UniversalCsvScreen` allowing seamless toggling between CSV and Markdown format templates, import preview, and one-tap clipboard copying for offline reading and physical printing.
 
+---
+
+## 11. Advanced Offline Instrumentation & Exam Protocol Architecture
+
+### 11.1 Full SQLite Database Sovereignty Backup & Restore (.95os)
+- **Local Storage Access Framework (SAF):**
+  - Manages full atomic export and import of raw Room database files.
+  - Flushes SQLite Write-Ahead Logging (`PRAGMA wal_checkpoint(FULL);`) prior to streaming out to SAF Uri.
+  - Validates SQLite binary header magic bytes (`SQLite format 3`) before committing import.
+  - Safeguarded by `.old` fallback swap to prevent data corruption.
+
+### 11.2 Formula & Key Definition Vault
+- **Schema & Persistence:**
+  - Table: `formulas` (foreign keys to `subjects` and `chapters`, cascade on delete).
+  - Modeled by `FormulaEntity`, accessed via `FormulaDao` and `FormulaRepository`.
+  - Supports subject filtering, search queries, exam relevance weightings (`HIGH`, `MEDIUM`, `LOW` yield), and bookmarking.
+
+### 11.3 "T-Minus 3 Hours" Exam Day Protocol
+- **Exam Morning Operational Engine:**
+  - Implemented in `ExamDayProtocolScreen.kt`.
+  - Three distinct modules: Logistics & Gear Checklist with persistent checkbox tracking, Timeline Pacing (T-3h to T-15m), and 5-Card Cognitive Priming with interactive Box Breathing (4-4-4-4) visualizer.
+
+### 11.4 100% Offline Procedural Focus Audio Generator
+- **Real-Time Synthesis Engine:**
+  - Implemented in `OfflineAcousticEngine.kt` using Android `AudioTrack` (16-bit mono 44.1 kHz PCM streaming).
+  - Generates real-time Brownian noise (integrated white noise with leaky decay), Pink noise (Kellet 6-pole filter bank), and Analog Exam Clock Tick (1 Hz mechanical pulse).
+  - Operates completely offline under Airplane Mode with zero MP3/WAV assets.
+
+### 11.5 Printable Revision Documents & Physical Remediation Sheets
+- **Document Engine:**
+  - Implemented in `RevisionDocumentGenerator.kt`.
+  - Generates standardized printable A4 PDF documents and structured Markdown for Mistake Remediation Sheets and Forgetting Flash Sheets.
+
+### 11.6 Study Consistency Heatmap & Target Sensitivity Simulator
+- **Analytics Visualizers:**
+  - `StudyConsistencyHeatmap`: 70-day visual focus volume and streak grid in `ProgressScreen`.
+  - Dynamic "What-If" Sensitivity Simulator in `Target95Engine` calculating exact score gains from targeted mark recoveries.
+
+
 
 

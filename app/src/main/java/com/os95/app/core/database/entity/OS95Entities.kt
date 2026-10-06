@@ -342,3 +342,35 @@ data class StudySessionEntity(
     val durationMinutes: Int,
     val completedAt: Long = System.currentTimeMillis()
 )
+
+@Entity(
+    tableName = "formulas",
+    foreignKeys = [
+        ForeignKey(
+            entity = SubjectEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["subjectId"],
+            onDelete = ForeignKey.CASCADE
+        ),
+        ForeignKey(
+            entity = ChapterEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["chapterId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index("subjectId"), Index("chapterId"), Index("isBookmarked")]
+)
+data class FormulaEntity(
+    @PrimaryKey val id: String = UUID.randomUUID().toString(),
+    val subjectId: String,
+    val chapterId: String,
+    val topicId: String? = null,
+    val title: String,
+    val expression: String,
+    val explanation: String = "",
+    val examRelevance: String = "HIGH",
+    val isBookmarked: Boolean = false,
+    val createdAt: Long = System.currentTimeMillis()
+)
+

@@ -11,6 +11,16 @@
 - [ ] (No open bugs)
 
 # Completed
+- [x] Full Database Sovereignty Backup & Restore Manager (`.95os` raw SQLite export/import with WAL checkpointing, binary header validation, and atomic swap)
+- [x] Session Navigation Safety: Jetpack Compose `BackHandler` protections for active sessions in `ExamSimulatorScreen`, `AdaptiveRetestScreen`, and `FocusScreen` with exit confirmation modals
+- [x] Syllabus Batch Mastery Progression: Chapter-level "Revise All" and "Master All" batch actions with optimized Room SQL execution
+- [x] Printable Revision Documents: `RevisionDocumentGenerator` producing printer-ready A4 PDF and Markdown sheets for Mistake Remediation and Forgetting Flash Sheet
+- [x] Longitudinal Study Consistency & Mastery Heatmap: 70-day (10-week) visual study grid in `ProgressScreen`
+- [x] Target Score Sensitivity ("What-If") Calculator: Dynamic slider simulating projected score and marks gap impact in `Target95Engine` and `ProgressScreen`
+- [x] Formula & Key Definition Vault: Database persistence (`FormulaEntity`, `FormulaDao`), repository, and UI (`FormulaVaultScreen`) with subject filtering, search, and bookmarking
+- [x] "T-Minus 3 Hours" Exam Day Protocol: Zero-panic exam morning suite with gear checklist, arrival timeline, and 5-card cognitive priming with interactive box breathing
+- [x] 100% Offline Procedural Focus Audio Generator: `OfflineAcousticEngine` with real-time PCM synthesis for Brownian noise, Pink noise, and Analog Exam Clock Tick (0 KB external assets)
+- [x] Final Assembly & Test Suite: 95/95 unit tests passing cleanly (`testDebugUnitTest`) and APK compilation verified (`assembleDebug`)
 - [x] Application Reset Feature: Atomic Room `clearAllTables()` and DataStore preferences wipe with confirmation dialog and navigation redirect to Onboarding
 - [x] Academic Custom Themes: 6 themes (`SYSTEM`, `WARM_OBSIDIAN`, `PAPER_WHITE`, `GRAPHITE_CHAMBER`, `SEPIA_SCHOLAR`, `FOREST_SLATE`) adhering strictly to NO PURPLE and NO DARK NAVY rules
 - [x] 18+ Subject Catalog & 7-Step Onboarding: Multi-stream presets (`PCM`, `PCB`, `Commerce`, `Humanities`), custom subject addition, board benchmarks, and structured step transitions

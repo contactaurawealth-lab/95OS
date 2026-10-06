@@ -24,6 +24,10 @@ data class ProgressUiState(
     val snapshot: MarksRecoverySnapshot? = null,
     val metrics: Target95Metrics = Target95Metrics(0f, 95f, 95f, 0f, 0f, 0f, 0),
     val targetPercentage: Float = 95.0f,
+    val dailyStudyMinutes: Map<Long, Int> = emptyMap(),
+    val sensitivityResult: com.os95.app.domain.engine.TargetSensitivityResult? = null,
+    val simulatedSubjectId: String? = null,
+    val simulatedPercentage: Float = 90f,
     val isLoading: Boolean = true,
     val feedbackMessage: String? = null
 )
@@ -61,6 +65,16 @@ class ProgressViewModel(
                 )
             }
         }
+        viewModelScope.launch {
+            studentRepository.getAllSessions().collect { sessions ->
+                val dayMap = mutableMapOf<Long, Int>()
+                sessions.forEach { s ->
+                    val day = java.util.concurrent.TimeUnit.MILLISECONDS.toDays(s.completedAt)
+                    dayMap[day] = (dayMap[day] ?: 0) + s.durationMinutes
+                }
+                _uiState.value = _uiState.value.copy(dailyStudyMinutes = dayMap)
+            }
+        }
     }
 
     fun selectTab(tab: ProgressTab) {
@@ -86,6 +100,49 @@ class ProgressViewModel(
                 feedbackMessage = "Completed $durationMinutes-min Rescue Session! History updated."
             )
         }
+    }
+
+    fun runSensitivitySimulation(subjectId: String, percentage: Float) {
+        val snapshot = _uiState.value.snapshot ?: return
+        val subjectList = snapshot.paperAnalysis.subjectPerformance
+        val subjects = if (subjectList.isNotEmpty()) {
+            subjectList.map { sp ->
+                com.os95.app.domain.engine.SubjectScoreInput(
+                    subjectId = sp.subjectId,
+                    subjectName = sp.subjectName,
+                    currentPercentage = sp.averagePercentage,
+                    totalExamMarks = 100f
+                )
+            }
+        } else {
+            snapshot.marksGap.topOpportunities.map { opp ->
+                com.os95.app.domain.engine.SubjectScoreInput(
+                    subjectId = opp.subjectId,
+                    subjectName = opp.subjectName,
+                    currentPercentage = 85f,
+                    totalExamMarks = 100f
+                )
+            }.distinctBy { it.subjectId }
+        }
+
+        val result = com.os95.app.domain.engine.Target95Engine.calculateSensitivity(
+            subjects = subjects,
+            simulatedSubjectId = subjectId,
+            simulatedPercentage = percentage,
+            targetOverallPercentage = _uiState.value.targetPercentage
+        )
+        _uiState.value = _uiState.value.copy(
+            sensitivityResult = result,
+            simulatedSubjectId = subjectId,
+            simulatedPercentage = percentage
+        )
+    }
+
+    fun clearSensitivitySimulation() {
+        _uiState.value = _uiState.value.copy(
+            sensitivityResult = null,
+            simulatedSubjectId = null
+        )
     }
 
     fun clearFeedback() {

@@ -2,6 +2,7 @@ package com.os95.app.domain.repository
 
 import com.os95.app.core.database.entity.ChapterEntity
 import com.os95.app.core.database.entity.ExamResultEntity
+import com.os95.app.core.database.entity.FormulaEntity
 import com.os95.app.core.database.entity.LostMarksEntity
 import com.os95.app.core.database.entity.MistakeEntity
 import com.os95.app.core.database.entity.PaperEntity
@@ -30,6 +31,7 @@ interface SyllabusRepository {
     fun getAllTopics(): Flow<List<TopicEntity>>
     suspend fun createTopic(chapterId: String, name: String, relevance: String): TopicEntity
     suspend fun updateTopic(topic: TopicEntity)
+    suspend fun updateChapterTopicsMastery(chapterId: String, masteryState: String)
 
     fun getMasteredTopicsCount(): Flow<Int>
     fun getTotalTopicsCount(): Flow<Int>
@@ -120,4 +122,23 @@ interface AdvancedExamRepository {
     suspend fun setTargetExamDate(timestamp: Long?)
     suspend fun getCommandCenterSnapshot(): com.os95.app.domain.model.CommandCenterSnapshot
 }
+
+interface FormulaRepository {
+    fun getAllFormulas(): Flow<List<FormulaEntity>>
+    fun getFormulasBySubject(subjectId: String): Flow<List<FormulaEntity>>
+    fun getFormulasByChapter(chapterId: String): Flow<List<FormulaEntity>>
+    fun getBookmarkedFormulas(): Flow<List<FormulaEntity>>
+    suspend fun addFormula(
+        subjectId: String,
+        chapterId: String,
+        title: String,
+        expression: String,
+        explanation: String = "",
+        examRelevance: String = "HIGH"
+    ): FormulaEntity
+    suspend fun updateFormula(formula: FormulaEntity)
+    suspend fun toggleBookmark(formulaId: String, isBookmarked: Boolean)
+    suspend fun deleteFormula(formula: FormulaEntity)
+}
+
 

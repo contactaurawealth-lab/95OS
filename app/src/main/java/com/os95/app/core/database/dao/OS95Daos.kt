@@ -8,6 +8,7 @@ import androidx.room.Query
 import androidx.room.Update
 import com.os95.app.core.database.entity.ChapterEntity
 import com.os95.app.core.database.entity.ExamResultEntity
+import com.os95.app.core.database.entity.FormulaEntity
 import com.os95.app.core.database.entity.LostMarksEntity
 import com.os95.app.core.database.entity.MistakeEntity
 import com.os95.app.core.database.entity.PaperEntity
@@ -125,6 +126,9 @@ interface SyllabusDao {
 
     @Query("UPDATE topics SET weaknessScore = :weaknessScore WHERE id = :topicId")
     suspend fun updateTopicWeakness(topicId: String, weaknessScore: Float)
+
+    @Query("UPDATE topics SET masteryState = :masteryState WHERE chapterId = :chapterId")
+    suspend fun updateMasteryForChapter(chapterId: String, masteryState: String)
 
     @Delete
     suspend fun deleteTopic(topic: TopicEntity)
@@ -320,3 +324,37 @@ interface StudySessionDao {
     @Query("SELECT SUM(durationMinutes) FROM study_sessions WHERE completedAt >= :sinceTimestamp")
     fun getTotalMinutesSince(sinceTimestamp: Long): Flow<Int?>
 }
+
+@Dao
+interface FormulaDao {
+    @Query("SELECT * FROM formulas ORDER BY isBookmarked DESC, createdAt DESC")
+    fun getAllFormulas(): Flow<List<FormulaEntity>>
+
+    @Query("SELECT * FROM formulas ORDER BY isBookmarked DESC, createdAt DESC")
+    suspend fun getAllFormulasSync(): List<FormulaEntity>
+
+    @Query("SELECT * FROM formulas WHERE subjectId = :subjectId ORDER BY isBookmarked DESC, createdAt DESC")
+    fun getFormulasBySubject(subjectId: String): Flow<List<FormulaEntity>>
+
+    @Query("SELECT * FROM formulas WHERE chapterId = :chapterId ORDER BY isBookmarked DESC, createdAt DESC")
+    fun getFormulasByChapter(chapterId: String): Flow<List<FormulaEntity>>
+
+    @Query("SELECT * FROM formulas WHERE isBookmarked = 1 ORDER BY createdAt DESC")
+    fun getBookmarkedFormulas(): Flow<List<FormulaEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertFormula(formula: FormulaEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertFormulas(formulas: List<FormulaEntity>)
+
+    @Update
+    suspend fun updateFormula(formula: FormulaEntity)
+
+    @Query("UPDATE formulas SET isBookmarked = :isBookmarked WHERE id = :formulaId")
+    suspend fun toggleBookmark(formulaId: String, isBookmarked: Boolean)
+
+    @Delete
+    suspend fun deleteFormula(formula: FormulaEntity)
+}
+

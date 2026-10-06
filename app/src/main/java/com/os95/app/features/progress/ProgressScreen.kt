@@ -52,6 +52,7 @@ import com.os95.app.core.ui.component.OS95LoadingState
 import com.os95.app.core.ui.component.OS95OutlinedButton
 import com.os95.app.core.ui.component.OS95ProgressBar
 import com.os95.app.core.ui.component.OS95TopBar
+import com.os95.app.core.ui.component.StudyConsistencyHeatmap
 import com.os95.app.core.ui.theme.OS95Theme
 import com.os95.app.domain.model.PaperTrendDirection
 import com.os95.app.domain.model.RecoveryPriorityLevel
@@ -134,10 +135,21 @@ fun ProgressScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
+            // 70-Day Study Consistency Heatmap
+            StudyConsistencyHeatmap(
+                dailyStudyMinutes = uiState.dailyStudyMinutes,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+
             // Tab Content
             when (uiState.selectedTab) {
                 ProgressTab.MARKS_GAP -> MarksGapTabContent(
                     snapshot = snapshot,
+                    sensitivityResult = uiState.sensitivityResult,
+                    simulatedSubjectId = uiState.simulatedSubjectId,
+                    simulatedPercentage = uiState.simulatedPercentage,
+                    onRunSensitivity = { subId, pct -> viewModel.runSensitivitySimulation(subId, pct) },
+                    onClearSensitivity = { viewModel.clearSensitivitySimulation() },
                     onStartRescue = { showRescueDialog = true },
                     onNavigateToMistakes = onNavigateToMistakes
                 )
@@ -262,6 +274,11 @@ fun ProgressScreen(
 @Composable
 fun MarksGapTabContent(
     snapshot: com.os95.app.domain.model.MarksRecoverySnapshot,
+    sensitivityResult: com.os95.app.domain.engine.TargetSensitivityResult?,
+    simulatedSubjectId: String?,
+    simulatedPercentage: Float,
+    onRunSensitivity: (String, Float) -> Unit,
+    onClearSensitivity: () -> Unit,
     onStartRescue: () -> Unit,
     onNavigateToMistakes: () -> Unit
 ) {
@@ -435,6 +452,157 @@ fun MarksGapTabContent(
                             style = typography.bodySmall,
                             color = colors.secondaryText
                         )
+                    }
+                }
+            }
+        }
+    }
+
+    Spacer(modifier = Modifier.height(spacing.m))
+
+    // --- Target Sensitivity Calculator («What-If» Scenario) ---
+    Text(
+        text = "TARGET SENSITIVITY CALCULATOR («WHAT-IF» SCENARIO)",
+        style = typography.caption.copy(letterSpacing = 1.sp),
+        color = colors.accent
+    )
+    Spacer(modifier = Modifier.height(spacing.s))
+
+    OS95Card(modifier = Modifier.fillMaxWidth(), backgroundColor = colors.cardBackground) {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(
+                text = "Simulate how changes in one subject's score impact your overall benchmark, and see the exact compensatory marks needed across other subjects to stay on track.",
+                style = typography.bodySmall,
+                color = colors.secondaryText
+            )
+
+            val subjectItems = if (snapshot.paperAnalysis.subjectPerformance.isNotEmpty()) {
+                snapshot.paperAnalysis.subjectPerformance.map { it.subjectId to it.subjectName }
+            } else {
+                snapshot.marksGap.topOpportunities.map { it.subjectId to it.subjectName }.distinctBy { it.first }
+            }
+
+            if (subjectItems.isEmpty()) {
+                Text(
+                    text = "No subjects registered for sensitivity modeling.",
+                    style = typography.caption,
+                    color = colors.mutedText
+                )
+            } else {
+                Text(text = "Select subject to simulate:", style = typography.caption, color = colors.primaryText)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    subjectItems.take(5).forEach { (subId, subName) ->
+                        val isSelected = simulatedSubjectId == subId
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .defaultMinSize(minHeight = 40.dp)
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(if (isSelected) colors.accent else colors.surface)
+                                .clickable {
+                                    onRunSensitivity(subId, simulatedPercentage)
+                                }
+                                .padding(vertical = 8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = subName.take(6),
+                                style = typography.caption,
+                                color = if (isSelected) colors.surface else colors.primaryText
+                            )
+                        }
+                    }
+                }
+
+                if (simulatedSubjectId != null) {
+                    Text(text = "Simulate score percentage:", style = typography.caption, color = colors.primaryText)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        listOf(75f, 80f, 85f, 90f, 95f).forEach { pct ->
+                            val isSelPct = simulatedPercentage == pct
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .defaultMinSize(minHeight = 36.dp)
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(if (isSelPct) colors.accentCyan else colors.surface)
+                                    .clickable {
+                                        onRunSensitivity(simulatedSubjectId, pct)
+                                    }
+                                    .padding(vertical = 6.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "${pct.toInt()}%",
+                                    style = typography.caption,
+                                    color = if (isSelPct) colors.surface else colors.primaryText
+                                )
+                            }
+                        }
+                    }
+                }
+
+                if (sensitivityResult != null) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(colors.surface)
+                            .padding(12.dp)
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(text = "Simulated Average:", style = typography.caption, color = colors.mutedText)
+                                Text(
+                                    text = "${"%.1f".format(sensitivityResult.simulatedOverallPercentage)}%",
+                                    style = typography.caption,
+                                    color = colors.primaryText
+                                )
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(text = "Compensatory Marks Needed:", style = typography.caption, color = colors.mutedText)
+                                Text(
+                                    text = "+${"%.1f".format(sensitivityResult.totalCompensatoryMarksNeeded)} marks",
+                                    style = typography.caption,
+                                    color = if (sensitivityResult.isTargetAchievable) colors.accent else colors.error
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(text = "Subject Re-allocation Guidance:", style = typography.caption, color = colors.accentCyan)
+                            sensitivityResult.subjectCompensations.forEach { comp ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(text = comp.subjectName, style = typography.bodySmall, color = colors.primaryText)
+                                    Text(
+                                        text = "${"%.0f".format(comp.currentPercentage)}% → ${"%.0f".format(comp.targetPercentage)}% (+${"%.1f".format(comp.requiredAdditionalMarks)}m)",
+                                        style = typography.caption,
+                                        color = colors.mutedText
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(6.dp))
+                            OS95OutlinedButton(
+                                text = "Reset Simulation",
+                                onClick = onClearSensitivity,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
                     }
                 }
             }

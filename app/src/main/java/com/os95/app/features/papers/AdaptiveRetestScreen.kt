@@ -30,6 +30,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -56,6 +59,48 @@ fun AdaptiveRetestScreen(
     val typography = OS95Theme.typography
     val spacing = OS95Theme.spacing
     val shapes = OS95Theme.shapes
+    var showAbandonDialog by remember { mutableStateOf(false) }
+
+    androidx.activity.compose.BackHandler(enabled = uiState.stage == AdaptiveRetestStage.IN_TEST) {
+        showAbandonDialog = true
+    }
+
+    if (showAbandonDialog) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showAbandonDialog = false },
+            title = {
+                Text(
+                    text = "Abandon Re-Test Session?",
+                    style = typography.sectionTitle,
+                    color = colors.warning
+                )
+            },
+            text = {
+                Text(
+                    text = "Your answers for this diagnostic re-test will not be recorded and unmastered mistakes will remain open. Are you sure you wish to exit?",
+                    style = typography.bodySmall,
+                    color = colors.primaryText
+                )
+            },
+            confirmButton = {
+                OS95Button(
+                    text = "Exit Re-Test",
+                    onClick = {
+                        showAbandonDialog = false
+                        viewModel.restart()
+                    }
+                )
+            },
+            dismissButton = {
+                OS95OutlinedButton(
+                    text = "Continue Test",
+                    onClick = { showAbandonDialog = false }
+                )
+            },
+            containerColor = colors.surface,
+            textContentColor = colors.primaryText
+        )
+    }
 
     Column(
         modifier = modifier
@@ -72,7 +117,7 @@ fun AdaptiveRetestScreen(
             OS95IconButton(
                 onClick = {
                     if (uiState.stage == AdaptiveRetestStage.IN_TEST) {
-                        viewModel.restart()
+                        showAbandonDialog = true
                     } else {
                         onNavigateBack()
                     }

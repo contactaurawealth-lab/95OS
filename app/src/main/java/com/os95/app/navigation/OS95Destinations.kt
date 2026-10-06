@@ -44,6 +44,8 @@ sealed class OS95Screen(val route: String) {
     object AdaptiveRetest : OS95Screen("adaptive-retest")
     object ExamSimulator : OS95Screen("exam-simulator")
     object Last7Days : OS95Screen("last-7-days")
+    object ExamDayProtocol : OS95Screen("exam-day-protocol")
+    object FormulaVault : OS95Screen("formula-vault")
 
     // Focus & Utility Destinations
     object Focus : OS95Screen("focus")

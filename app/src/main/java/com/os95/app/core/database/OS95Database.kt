@@ -6,6 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.withTransaction
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.os95.app.core.database.dao.FormulaDao
 import com.os95.app.core.database.dao.MistakeDao
 import com.os95.app.core.database.dao.PaperPilotDao
 import com.os95.app.core.database.dao.RecallDao
@@ -15,6 +16,7 @@ import com.os95.app.core.database.dao.StudySessionDao
 import com.os95.app.core.database.dao.SyllabusDao
 import com.os95.app.core.database.entity.ChapterEntity
 import com.os95.app.core.database.entity.ExamResultEntity
+import com.os95.app.core.database.entity.FormulaEntity
 import com.os95.app.core.database.entity.LostMarksEntity
 import com.os95.app.core.database.entity.MistakeEntity
 import com.os95.app.core.database.entity.PaperEntity
@@ -36,6 +38,7 @@ interface DatabaseProvider {
     fun mistakeDao(): MistakeDao
     fun recallDao(): RecallDao
     fun studySessionDao(): StudySessionDao
+    fun formulaDao(): FormulaDao
     suspend fun <R> runInTransaction(block: suspend () -> R): R
 }
 
@@ -54,9 +57,10 @@ interface DatabaseProvider {
         MistakeEntity::class,
         RecallCardEntity::class,
         RecallReviewEntity::class,
-        StudySessionEntity::class
+        StudySessionEntity::class,
+        FormulaEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class OS95Database : RoomDatabase(), DatabaseProvider {
@@ -67,6 +71,7 @@ abstract class OS95Database : RoomDatabase(), DatabaseProvider {
     abstract override fun mistakeDao(): MistakeDao
     abstract override fun recallDao(): RecallDao
     abstract override fun studySessionDao(): StudySessionDao
+    abstract override fun formulaDao(): FormulaDao
 
     override suspend fun <R> runInTransaction(block: suspend () -> R): R = withTransaction(block)
 

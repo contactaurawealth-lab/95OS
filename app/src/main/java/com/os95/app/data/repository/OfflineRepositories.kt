@@ -1,5 +1,6 @@
 package com.os95.app.data.repository
 
+import com.os95.app.core.database.dao.FormulaDao
 import com.os95.app.core.database.dao.MistakeDao
 import com.os95.app.core.database.dao.PaperPilotDao
 import com.os95.app.core.database.dao.RecallDao
@@ -9,7 +10,9 @@ import com.os95.app.core.database.dao.StudySessionDao
 import com.os95.app.core.database.dao.SyllabusDao
 import com.os95.app.core.database.entity.ChapterEntity
 import com.os95.app.core.database.entity.ExamResultEntity
+import com.os95.app.core.database.entity.FormulaEntity
 import com.os95.app.core.database.entity.LostMarksEntity
+import com.os95.app.domain.repository.FormulaRepository
 import com.os95.app.core.database.entity.MistakeEntity
 import com.os95.app.core.database.entity.PaperEntity
 import com.os95.app.core.database.entity.PaperQuestionEntity
@@ -69,6 +72,9 @@ class OfflineSyllabusRepository(
     }
 
     override suspend fun updateTopic(topic: TopicEntity) = dao.updateTopic(topic)
+
+    override suspend fun updateChapterTopicsMastery(chapterId: String, masteryState: String) =
+        dao.updateMasteryForChapter(chapterId, masteryState)
 
     override fun getMasteredTopicsCount(): Flow<Int> = dao.getMasteredTopicsCount()
 
@@ -1048,5 +1054,56 @@ class OfflineAdvancedExamRepository(
         )
     }
 }
+
+class OfflineFormulaRepository(
+    private val dao: FormulaDao
+) : FormulaRepository {
+    override fun getAllFormulas(): Flow<List<FormulaEntity>> = dao.getAllFormulas()
+
+    override fun getFormulasBySubject(subjectId: String): Flow<List<FormulaEntity>> =
+        dao.getFormulasBySubject(subjectId)
+
+    override fun getFormulasByChapter(chapterId: String): Flow<List<FormulaEntity>> =
+        dao.getFormulasByChapter(chapterId)
+
+    override fun getBookmarkedFormulas(): Flow<List<FormulaEntity>> =
+        dao.getBookmarkedFormulas()
+
+    override suspend fun addFormula(
+        subjectId: String,
+        chapterId: String,
+        title: String,
+        expression: String,
+        explanation: String,
+        examRelevance: String
+    ): FormulaEntity = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        val formula = FormulaEntity(
+            subjectId = subjectId,
+            chapterId = chapterId,
+            title = title,
+            expression = expression,
+            explanation = explanation,
+            examRelevance = examRelevance
+        )
+        dao.insertFormula(formula)
+        formula
+    }
+
+    override suspend fun updateFormula(formula: FormulaEntity) =
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            dao.updateFormula(formula)
+        }
+
+    override suspend fun toggleBookmark(formulaId: String, isBookmarked: Boolean) =
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            dao.toggleBookmark(formulaId, isBookmarked)
+        }
+
+    override suspend fun deleteFormula(formula: FormulaEntity) =
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            dao.deleteFormula(formula)
+        }
+}
+
 
 

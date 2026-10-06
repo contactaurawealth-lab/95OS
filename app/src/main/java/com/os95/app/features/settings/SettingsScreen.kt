@@ -42,7 +42,36 @@ fun SettingsScreen(
     val typography = OS95Theme.typography
     val spacing = OS95Theme.spacing
     val scrollState = rememberScrollState()
+    val context = androidx.compose.ui.platform.LocalContext.current
     var showResetDialog by remember { mutableStateOf(false) }
+    var backupStatusMessage by remember { mutableStateOf<String?>(null) }
+    var pendingRestoreUri by remember { mutableStateOf<android.net.Uri?>(null) }
+    var showRestoreConfirmDialog by remember { mutableStateOf(false) }
+
+    val exportLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.CreateDocument("application/octet-stream")
+    ) { uri ->
+        if (uri != null) {
+            try {
+                context.contentResolver.openOutputStream(uri)?.use { stream ->
+                    viewModel.exportDatabaseBackup(context, stream) { success, msg ->
+                        backupStatusMessage = msg
+                    }
+                }
+            } catch (e: Exception) {
+                backupStatusMessage = "Export failed: ${e.message}"
+            }
+        }
+    }
+
+    val importLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            pendingRestoreUri = uri
+            showRestoreConfirmDialog = true
+        }
+    }
 
     if (showResetDialog) {
         androidx.compose.material3.AlertDialog(
@@ -76,6 +105,61 @@ fun SettingsScreen(
                 OS95OutlinedButton(
                     text = "Cancel",
                     onClick = { showResetDialog = false }
+                )
+            },
+            containerColor = colors.surface,
+            textContentColor = colors.primaryText
+        )
+    }
+
+    if (showRestoreConfirmDialog && pendingRestoreUri != null) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = {
+                showRestoreConfirmDialog = false
+                pendingRestoreUri = null
+            },
+            title = {
+                Text(
+                    text = "Restore Database Backup?",
+                    style = typography.sectionTitle,
+                    color = colors.warning
+                )
+            },
+            text = {
+                Text(
+                    text = "This will overwrite your current local database with the selected backup file. Existing test history will be replaced with the backup. Continue?",
+                    style = typography.bodySmall,
+                    color = colors.primaryText
+                )
+            },
+            confirmButton = {
+                OS95Button(
+                    text = "Restore Database",
+                    onClick = {
+                        val uri = pendingRestoreUri
+                        showRestoreConfirmDialog = false
+                        pendingRestoreUri = null
+                        if (uri != null) {
+                            try {
+                                context.contentResolver.openInputStream(uri)?.use { stream ->
+                                    viewModel.importDatabaseBackup(context, stream) { success, msg ->
+                                        backupStatusMessage = msg
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                backupStatusMessage = "Restore failed: ${e.message}"
+                            }
+                        }
+                    }
+                )
+            },
+            dismissButton = {
+                OS95OutlinedButton(
+                    text = "Cancel",
+                    onClick = {
+                        showRestoreConfirmDialog = false
+                        pendingRestoreUri = null
+                    }
                 )
             },
             containerColor = colors.surface,
@@ -252,6 +336,47 @@ fun SettingsScreen(
                 }
             }
 
+            // Database Sovereignty & Full Backup (.95os)
+            Column {
+                Text(
+                    text = "Full Database Sovereignty (.95os)",
+                    style = typography.sectionTitle,
+                    color = colors.primaryText
+                )
+                Spacer(modifier = Modifier.height(spacing.s))
+                OS95Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text(
+                            text = "Export or restore the entire raw SQLite database (.95os). Includes all 14 database tables, exact SM-2 card intervals, historical sessions, and student profile.",
+                            style = typography.bodySmall,
+                            color = colors.secondaryText
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OS95OutlinedButton(
+                                text = "Export .95os Backup",
+                                onClick = { exportLauncher.launch("95os_backup_${System.currentTimeMillis() / 1000}.95os") },
+                                modifier = Modifier.weight(1f)
+                            )
+                            OS95OutlinedButton(
+                                text = "Restore .95os Backup",
+                                onClick = { importLauncher.launch(arrayOf("*/*")) },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        if (backupStatusMessage != null) {
+                            Text(
+                                text = backupStatusMessage!!,
+                                style = typography.caption,
+                                color = colors.accent
+                            )
+                        }
+                    }
+                }
+            }
+
             // Danger Zone: App Reset
             Column {
                 Text(
@@ -301,7 +426,7 @@ fun SettingsScreen(
                         )
                         Spacer(modifier = Modifier.height(spacing.xs))
                         Text(
-                            text = "Version 2.1.0 (Exam Intelligence & Recovery Suite)",
+                            text = "Version 2.2.0 (The Offline Exam Operating System)",
                             style = typography.caption,
                             color = colors.mutedText
                         )

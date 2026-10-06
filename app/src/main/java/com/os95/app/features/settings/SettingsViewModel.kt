@@ -84,4 +84,28 @@ class SettingsViewModel(
             onResetComplete()
         }
     }
+
+    fun exportDatabaseBackup(context: android.content.Context, outputStream: java.io.OutputStream, onResult: (Boolean, String) -> Unit) {
+        viewModelScope.launch {
+            val result = com.os95.app.core.database.backup.DatabaseBackupManager.exportDatabase(context, outputStream)
+            if (result.isSuccess) {
+                val bytes = result.getOrNull() ?: 0L
+                val kb = bytes / 1024
+                onResult(true, "Successfully exported database backup ($kb KB).")
+            } else {
+                onResult(false, result.exceptionOrNull()?.message ?: "Export failed.")
+            }
+        }
+    }
+
+    fun importDatabaseBackup(context: android.content.Context, inputStream: java.io.InputStream, onResult: (Boolean, String) -> Unit) {
+        viewModelScope.launch {
+            val result = com.os95.app.core.database.backup.DatabaseBackupManager.importDatabase(context, inputStream)
+            if (result.isSuccess) {
+                onResult(true, "Database backup restored successfully.")
+            } else {
+                onResult(false, result.exceptionOrNull()?.message ?: "Restore failed.")
+            }
+        }
+    }
 }

@@ -299,10 +299,28 @@ fun ChapterDetailScreen(
                 onPrimaryAction = { showAddTopicDialog = true }
             )
         } else {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OS95OutlinedButton(
+                    text = "Mark All Revised",
+                    onClick = { viewModel.updateChapterMastery(chapterId, "REVISED") },
+                    modifier = Modifier.weight(1f)
+                )
+                OS95OutlinedButton(
+                    text = "Mark All Mastered",
+                    onClick = { viewModel.updateChapterMastery(chapterId, "MASTERED") },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                    .padding(horizontal = 20.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 items(uiState.currentTopics) { topic ->

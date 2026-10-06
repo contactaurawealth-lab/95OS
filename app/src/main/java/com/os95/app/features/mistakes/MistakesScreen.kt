@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.Print
 import androidx.compose.material.icons.outlined.Psychology
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.Icon
@@ -23,6 +24,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
+import com.os95.app.domain.pdf.RevisionDocumentGenerator
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -53,8 +58,12 @@ fun MistakesScreen(
     val shapes = OS95Theme.shapes
     val spacing = OS95Theme.spacing
     var showAddDialog by remember { mutableStateOf(false) }
+    var showPrintDialog by remember { mutableStateOf(false) }
+    var printFeedbackMessage by remember { mutableStateOf<String?>(null) }
     var mistakeQuestion by remember { mutableStateOf("") }
     var correctAnswer by remember { mutableStateOf("") }
+    val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
 
     Column(
         modifier = modifier
@@ -66,6 +75,13 @@ fun MistakesScreen(
             subtitle = "${uiState.activeMistakes.size} Active Mistakes",
             onBack = onNavigateBack,
             actions = {
+                if (uiState.activeMistakes.isNotEmpty()) {
+                    OS95IconButton(
+                        icon = Icons.Outlined.Print,
+                        contentDescription = "Print Remediation Sheet",
+                        onClick = { showPrintDialog = true }
+                    )
+                }
                 OS95IconButton(
                     icon = Icons.Outlined.Add,
                     contentDescription = "Log Mistake",
@@ -234,6 +250,36 @@ fun MistakesScreen(
                 showAddDialog = false
                 mistakeQuestion = ""
                 correctAnswer = ""
+            }
+        )
+    }
+
+    if (showPrintDialog) {
+        val subjectNames = remember(uiState.subjects) {
+            uiState.subjects.associate { it.id to it.name }
+        }
+        val generator = remember { RevisionDocumentGenerator() }
+        val markdownText = remember(uiState.activeMistakes, subjectNames) {
+            generator.generateMistakeRemediationMarkdown(uiState.activeMistakes, subjectNames)
+        }
+
+        OS95Dialog(
+            title = "Print Remediation Sheet",
+            message = "Generate an offline study sheet of your ${uiState.activeMistakes.size} unmastered mistakes to eliminate recurring errors.",
+            confirmButtonText = "Copy Markdown",
+            onConfirm = {
+                clipboardManager.setText(AnnotatedString(markdownText))
+                printFeedbackMessage = "Copied printable remediation sheet to clipboard!"
+                showPrintDialog = false
+            },
+            onDismissRequest = {
+                try {
+                    val pdfFile = generator.generateMistakeRemediationPdf(context, uiState.activeMistakes, subjectNames)
+                    printFeedbackMessage = "Exported PDF (${pdfFile.length() / 1024} KB) to cache: ${pdfFile.name}"
+                } catch (e: Exception) {
+                    printFeedbackMessage = "PDF Generation failed: ${e.message}"
+                }
+                showPrintDialog = false
             }
         )
     }

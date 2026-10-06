@@ -65,6 +65,10 @@ fun ExamSimulatorScreen(
     val typography = OS95Theme.typography
     val spacing = OS95Theme.spacing
 
+    androidx.activity.compose.BackHandler(enabled = uiState.stage == SimulatorStage.IN_EXAM) {
+        viewModel.showSubmitDialog(true)
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()

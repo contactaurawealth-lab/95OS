@@ -22,40 +22,27 @@
 
 ---
 
-## ⚡ What's New in v2.1.0
+## ⚡ What's New in v2.3.0
 
-### 1. Advanced Exam Intelligence Engine (Features 6–10)
-- **Time-to-Marks Intelligence:**
-  - Evaluates student weakness, chapter exam weightage, recovery potential, and confidence factors ($W \times E \times I \times C$).
-  - Answers *"What is the best use of my next 30/60/90/120 minutes?"* with ranked high-impact chapters.
-- **Adaptive Re-Test:**
-  - Automatically synthesizes targeted diagnostic tests after exams.
-  - Strict distribution: **50% Weak Areas**, **30% Recently Incorrect**, **20% Mixed Revision**.
-  - Interactive self-scoring runner that directly resolves entries in the Mistake Bank upon demonstrating mastery.
-- **Exam Readiness Simulator:**
-  - Realistic timed examination environment matching syllabus blueprints.
-  - Live countdown timer, 1-tap question jump navigation palette, "Mark for Review" toggling, accidental submission protection.
-  - Multi-factor readiness index evaluating recent scores, simulation accuracy, topic coverage, pacing efficiency, and mistake health.
-- **Last-7-Days Mode:**
-  - High-intensity final-week sprint dashboard that auto-activates when the exam is $\le 7$ days away.
-  - Daily countdown curriculum (Day 7 down to Day 1) featuring *"Today's 3 Most Important Tasks"*, high-weightage priority chapters, and 15-minute spaced recall sprints.
-- **95% Command Center:**
-  - Redesigned home dashboard giving complete situational awareness within **5 seconds**.
-  - Top 95% Target metrics (Current Predicted %, Target %, Gap %, Readiness %, Days Remaining).
-  - Primary *"WHAT SHOULD I DO NOW?"* recommendation with 1-tap direct navigation.
+### 1. Database Sovereignty & Recovery Engine
+- **Raw SQLite Backup & Restore (.95os):** Full offline database backup and restore via Storage Access Framework with WAL flushing and binary header validation.
+- **Session Navigation Safety:** Jetpack Compose `BackHandler` protections for active simulator, retest, and focus sessions.
+- **Syllabus Batch Mastery Progression:** "Revise All" and "Master All" chapter-level one-tap batch actions.
+- **Printable Revision Documents:** Generates clean, printer-ready A4 PDF and Markdown exports for Mistake Remediation Sheets and Forgetting Flash Sheets.
+- **Longitudinal Study Consistency Heatmap:** 70-day (10-week) visual study grid in Progress tracking daily volume and streaks.
+- **Target Score Sensitivity Calculator:** Dynamic slider simulating projected score and marks gap impact in real time.
 
-### 2. Marks Recovery Engine (Features 1–5)
-- **Marks Gap Planner:** Real-time projection against target score with prioritized recovery opportunities.
-- **Forgetting Radar:** Memory decay prediction based on SuperMemo SM-2 intervals and ratings (Stable, Watch, At Risk, Critical).
-- **Previous Paper Analyzer:** Longitudinal pattern analysis across past tests, pinpointing recurrent loss categories.
-- **15-Minute Rescue Mode:** Rapid emergency remediation triage targeting highest-yield quick wins.
-- **Recovery Score:** Composite metric measuring actual marks recovered across repeated assessments.
+### 2. Exam Day Protocol & Formula Reference
+- **Formula & Key Definition Vault:** Offline vault for high-yield equations, laws, and definitions with subject filtering and monospace formatting.
+- **"T-Minus 3 Hours" Exam Day Protocol:** Pre-exam logistics checklist, departure/arrival timeline, and 5-card cognitive priming with interactive 4-4-4-4 box breathing.
+- **100% Offline Procedural Focus Audio Generator:** Real-time PCM audio synthesis using Android `AudioTrack` (Brownian noise, Pink noise, and Analog Exam Clock Tick) with 0 KB asset files.
 
-### 3. Core Academic Foundation
-- **Syllabus Hierarchy:** Subject $\to$ Chapter $\to$ Topic with 4-stage mastery state machine.
-- **SuperMemo SM-2 Recall Engine:** Offline flashcards with Ease Factor, Interval, and repetition tracking.
-- **PaperPilot:** Offline exam generator and question bank manager with CSV import/export support.
-- **Mistake Bank:** Diagnostic error tracking categorizing Careless, Calculation, Forgotten, and Conceptual errors.
+### 3. Advanced Exam Intelligence Engine (Features 6–10)
+- **Time-to-Marks Intelligence:** Evaluates student weakness, chapter exam weightage, recovery potential, and confidence factors ($W \times E \times I \times C$). Answers *"What is the best use of my next 30/60/90/120 minutes?"*.
+- **Adaptive Re-Test:** Targeted diagnostic tests with 50% weak areas, 30% recently missed, and 20% mixed revision.
+- **Exam Readiness Simulator:** Timed simulation with countdown timer, question jump palette, and multi-factor readiness score.
+- **Last-7-Days Mode:** Final-week countdown sprint with daily priority tasks and adaptive schedule adjustment.
+- **95% Command Center:** Primary dashboard providing 5-second situational awareness and a single recommended action.
 
 ---
 

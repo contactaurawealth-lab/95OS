@@ -29,6 +29,10 @@ class OS95AppContainer(context: Context) {
         OfflineSyllabusRepository(database.syllabusDao())
     }
 
+    val formulaRepository: com.os95.app.domain.repository.FormulaRepository by lazy {
+        com.os95.app.data.repository.OfflineFormulaRepository(database.formulaDao())
+    }
+
     val recallRepository: RecallRepository by lazy {
         OfflineRecallRepository(database.recallDao())
     }

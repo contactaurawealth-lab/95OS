@@ -20,10 +20,23 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Surface
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
+import com.os95.app.core.audio.AcousticMode
 import com.os95.app.core.ui.component.OS95Button
 import com.os95.app.core.ui.component.OS95Card
 import com.os95.app.core.ui.component.OS95OutlinedButton
@@ -44,6 +57,49 @@ fun FocusScreen(
     val minutes = uiState.remainingSeconds / 60
     val seconds = uiState.remainingSeconds % 60
     val timeFormatted = String.format(Locale.US, "%02d:%02d", minutes, seconds)
+    var showAbortDialog by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+
+    androidx.activity.compose.BackHandler(enabled = uiState.isRunning) {
+        showAbortDialog = true
+    }
+
+    if (showAbortDialog) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showAbortDialog = false },
+            title = {
+                Text(
+                    text = "End Focus Session Early?",
+                    style = typography.sectionTitle,
+                    color = colors.warning
+                )
+            },
+            text = {
+                Text(
+                    text = "Your active focus timer is still running. Exiting now will cancel the remaining session duration. Are you sure?",
+                    style = typography.bodySmall,
+                    color = colors.primaryText
+                )
+            },
+            confirmButton = {
+                OS95Button(
+                    text = "End Session",
+                    onClick = {
+                        showAbortDialog = false
+                        viewModel.reset()
+                        onNavigateBack()
+                    }
+                )
+            },
+            dismissButton = {
+                OS95OutlinedButton(
+                    text = "Keep Focusing",
+                    onClick = { showAbortDialog = false }
+                )
+            },
+            containerColor = colors.surface,
+            textContentColor = colors.primaryText
+        )
+    }
 
     Column(
         modifier = modifier
@@ -53,7 +109,13 @@ fun FocusScreen(
         OS95TopBar(
             title = "Focus & Exam Mode",
             subtitle = if (uiState.isRunning) "Session Active" else "Ready",
-            onBack = onNavigateBack
+            onBack = {
+                if (uiState.isRunning) {
+                    showAbortDialog = true
+                } else {
+                    onNavigateBack()
+                }
+            }
         )
 
         Column(
@@ -113,7 +175,65 @@ fun FocusScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(spacing.xxl))
+            Spacer(modifier = Modifier.height(spacing.l))
+
+            // Procedural Offline Focus Acoustics
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Procedural Audio Ambience (100% Offline)",
+                        style = typography.caption,
+                        color = colors.mutedText
+                    )
+                    if (uiState.acousticMode != AcousticMode.OFF) {
+                        Text(
+                            text = uiState.acousticMode.displayName,
+                            style = typography.caption,
+                            color = colors.accent
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    AcousticMode.values().forEach { mode ->
+                        val isSelected = uiState.acousticMode == mode
+                        Surface(
+                            modifier = Modifier
+                                .defaultMinSize(minHeight = spacing.minTouchTarget)
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable { viewModel.setAcousticMode(mode) },
+                            shape = RoundedCornerShape(8.dp),
+                            color = if (isSelected) colors.accent else colors.surface,
+                            border = BorderStroke(1.dp, if (isSelected) colors.accent else colors.border)
+                        ) {
+                            Box(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = mode.displayName,
+                                    style = typography.bodySmall,
+                                    color = if (isSelected) colors.surface else colors.primaryText,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(spacing.l))
 
             // Action Buttons
             Row(

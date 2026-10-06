@@ -92,6 +92,12 @@ class SyllabusViewModel(
         }
     }
 
+    fun updateChapterMastery(chapterId: String, newState: String) {
+        viewModelScope.launch {
+            repository.updateChapterTopicsMastery(chapterId, newState)
+        }
+    }
+
     fun clearError() {
         _uiState.value = _uiState.value.copy(errorMessage = null)
     }

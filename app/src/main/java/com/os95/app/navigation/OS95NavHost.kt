@@ -65,6 +65,9 @@ import com.os95.app.features.progress.TimeToMarksScreen
 import com.os95.app.features.progress.TimeToMarksViewModel
 import com.os95.app.features.home.Last7DaysScreen
 import com.os95.app.features.home.Last7DaysViewModel
+import com.os95.app.features.formulas.FormulaVaultScreen
+import com.os95.app.features.formulas.FormulaVaultViewModel
+import com.os95.app.features.papers.ExamDayProtocolScreen
 
 @Composable
 fun OS95App(
@@ -257,7 +260,9 @@ fun OS95NavGraph(
                 onNavigateToTimeToMarks = { navController.navigate(OS95Screen.TimeToMarks.route) },
                 onNavigateToAdaptiveRetest = { navController.navigate(OS95Screen.AdaptiveRetest.route) },
                 onNavigateToExamSimulator = { navController.navigate(OS95Screen.ExamSimulator.route) },
-                onNavigateToLast7Days = { navController.navigate(OS95Screen.Last7Days.route) }
+                onNavigateToLast7Days = { navController.navigate(OS95Screen.Last7Days.route) },
+                onNavigateToFormulaVault = { navController.navigate(OS95Screen.FormulaVault.route) },
+                onNavigateToExamDayProtocol = { navController.navigate(OS95Screen.ExamDayProtocol.route) }
             )
         }
 
@@ -480,6 +485,27 @@ fun OS95NavGraph(
                 onNavigateToRetest = { navController.navigate(OS95Screen.AdaptiveRetest.route) },
                 onNavigateToRecall = { navController.navigate(OS95Screen.Recall.route) },
                 onNavigateToMistakes = { navController.navigate(OS95Screen.Mistakes.route) }
+            )
+        }
+
+        // Formula Vault
+        composable(OS95Screen.FormulaVault.route) {
+            val vm = viewModel {
+                FormulaVaultViewModel(
+                    formulaRepository = container.formulaRepository,
+                    syllabusRepository = container.syllabusRepository
+                )
+            }
+            FormulaVaultScreen(
+                viewModel = vm,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        // T-Minus 3H Exam Day Protocol
+        composable(OS95Screen.ExamDayProtocol.route) {
+            ExamDayProtocolScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }

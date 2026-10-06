@@ -22,6 +22,8 @@ import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.automirrored.outlined.Assignment
 import androidx.compose.material.icons.automirrored.outlined.ShowChart
 import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.Checklist
+import androidx.compose.material.icons.outlined.Functions
 import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.outlined.ElectricBolt
 import androidx.compose.material.icons.outlined.Psychology
@@ -69,6 +71,8 @@ fun HomeScreen(
     onNavigateToAdaptiveRetest: () -> Unit = {},
     onNavigateToExamSimulator: () -> Unit = {},
     onNavigateToLast7Days: () -> Unit = {},
+    onNavigateToFormulaVault: () -> Unit = {},
+    onNavigateToExamDayProtocol: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -398,6 +402,66 @@ fun HomeScreen(
                     )
                     Text(
                         text = "Final week sprint",
+                        style = typography.caption,
+                        color = colors.mutedText
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Row 3: Formula Vault + T-Minus 3H Protocol
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            // Formula Vault Tile
+            OS95Card(
+                modifier = Modifier.weight(1f),
+                onClick = onNavigateToFormulaVault
+            ) {
+                Column {
+                    Icon(
+                        imageVector = Icons.Outlined.Functions,
+                        contentDescription = null,
+                        tint = colors.accent,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Formula Vault",
+                        style = typography.sectionTitle,
+                        color = colors.primaryText
+                    )
+                    Text(
+                        text = "Equations & laws",
+                        style = typography.caption,
+                        color = colors.mutedText
+                    )
+                }
+            }
+
+            // T-3H Protocol Tile
+            OS95Card(
+                modifier = Modifier.weight(1f),
+                onClick = onNavigateToExamDayProtocol
+            ) {
+                Column {
+                    Icon(
+                        imageVector = Icons.Outlined.Checklist,
+                        contentDescription = null,
+                        tint = colors.accentCyan,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "T-3H Protocol",
+                        style = typography.sectionTitle,
+                        color = colors.primaryText
+                    )
+                    Text(
+                        text = "Exam day readiness",
                         style = typography.caption,
                         color = colors.mutedText
                     )
