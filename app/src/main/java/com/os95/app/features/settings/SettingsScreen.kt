@@ -24,7 +24,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.os95.app.core.ui.component.OS95Button
 import com.os95.app.core.ui.component.OS95Card
+import com.os95.app.core.ui.component.OS95Dialog
 import com.os95.app.core.ui.component.OS95OutlinedButton
+import com.os95.app.core.ui.component.OS95TextField
 import com.os95.app.core.ui.component.OS95TopBar
 import com.os95.app.core.ui.theme.OS95Theme
 import com.os95.app.core.ui.theme.ThemeMode
@@ -47,6 +49,13 @@ fun SettingsScreen(
     var backupStatusMessage by remember { mutableStateOf<String?>(null) }
     var pendingRestoreUri by remember { mutableStateOf<android.net.Uri?>(null) }
     var showRestoreConfirmDialog by remember { mutableStateOf(false) }
+
+    var showTargetScoreDialog by remember { mutableStateOf(false) }
+    var targetScoreInput by remember { mutableStateOf("") }
+    var showDailyTargetDialog by remember { mutableStateOf(false) }
+    var dailyTargetInput by remember { mutableStateOf("") }
+    var showDurationDialog by remember { mutableStateOf(false) }
+    var durationInput by remember { mutableStateOf("") }
 
     val exportLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
         contract = androidx.activity.result.contract.ActivityResultContracts.CreateDocument("application/octet-stream")
@@ -74,96 +83,47 @@ fun SettingsScreen(
     }
 
     if (showResetDialog) {
-        androidx.compose.material3.AlertDialog(
-            onDismissRequest = { showResetDialog = false },
-            title = {
-                Text(
-                    text = "Reset 95OS Operating System?",
-                    style = typography.sectionTitle,
-                    color = colors.error
-                )
+        OS95Dialog(
+            title = "Reset 95OS Operating System?",
+            message = "This action will permanently delete all subjects, chapters, imported questions, exam results, mistake logs, and recall cards stored on this device.\n\nYour application will be restored to initial state and you will return to Onboarding.\n\nThis cannot be undone.",
+            confirmButtonText = "Erase & Reset All Data",
+            dismissButtonText = "Cancel",
+            onConfirm = {
+                showResetDialog = false
+                viewModel.resetEntireApplication {
+                    onAppReset?.invoke()
+                }
             },
-            text = {
-                Text(
-                    text = "This action will permanently delete all subjects, chapters, imported questions, exam results, mistake logs, and recall cards stored on this device.\n\nYour application will be restored to initial state and you will return to Onboarding.\n\nThis cannot be undone.",
-                    style = typography.bodySmall,
-                    color = colors.primaryText
-                )
-            },
-            confirmButton = {
-                OS95Button(
-                    text = "Erase & Reset All Data",
-                    onClick = {
-                        showResetDialog = false
-                        viewModel.resetEntireApplication {
-                            onAppReset?.invoke()
-                        }
-                    }
-                )
-            },
-            dismissButton = {
-                OS95OutlinedButton(
-                    text = "Cancel",
-                    onClick = { showResetDialog = false }
-                )
-            },
-            containerColor = colors.surface,
-            textContentColor = colors.primaryText
+            onDismissRequest = { showResetDialog = false }
         )
     }
 
     if (showRestoreConfirmDialog && pendingRestoreUri != null) {
-        androidx.compose.material3.AlertDialog(
+        OS95Dialog(
+            title = "Restore Database Backup?",
+            message = "This will overwrite your current local database with the selected backup file. Existing test history will be replaced with the backup. Continue?",
+            confirmButtonText = "Restore Database",
+            dismissButtonText = "Cancel",
+            onConfirm = {
+                val uri = pendingRestoreUri
+                showRestoreConfirmDialog = false
+                pendingRestoreUri = null
+                if (uri != null) {
+                    try {
+                        context.contentResolver.openInputStream(uri)?.use { stream ->
+                            viewModel.importDatabaseBackup(context, stream) { success, msg ->
+                                backupStatusMessage = msg
+                            }
+                        }
+                    } catch (e: Exception) {
+                        backupStatusMessage = "Restore failed: ${e.message}"
+                    }
+                }
+            },
             onDismissRequest = {
                 showRestoreConfirmDialog = false
                 pendingRestoreUri = null
-            },
-            title = {
-                Text(
-                    text = "Restore Database Backup?",
-                    style = typography.sectionTitle,
-                    color = colors.warning
-                )
-            },
-            text = {
-                Text(
-                    text = "This will overwrite your current local database with the selected backup file. Existing test history will be replaced with the backup. Continue?",
-                    style = typography.bodySmall,
-                    color = colors.primaryText
-                )
-            },
-            confirmButton = {
-                OS95Button(
-                    text = "Restore Database",
-                    onClick = {
-                        val uri = pendingRestoreUri
-                        showRestoreConfirmDialog = false
-                        pendingRestoreUri = null
-                        if (uri != null) {
-                            try {
-                                context.contentResolver.openInputStream(uri)?.use { stream ->
-                                    viewModel.importDatabaseBackup(context, stream) { success, msg ->
-                                        backupStatusMessage = msg
-                                    }
-                                }
-                            } catch (e: Exception) {
-                                backupStatusMessage = "Restore failed: ${e.message}"
-                            }
-                        }
-                    }
-                )
-            },
-            dismissButton = {
-                OS95OutlinedButton(
-                    text = "Cancel",
-                    onClick = {
-                        showRestoreConfirmDialog = false
-                        pendingRestoreUri = null
-                    }
-                )
-            },
-            containerColor = colors.surface,
-            textContentColor = colors.primaryText
+            }
         )
     }
 
@@ -259,30 +219,54 @@ fun SettingsScreen(
                 )
                 Spacer(modifier = Modifier.height(spacing.s))
                 OS95Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    targetScoreInput = uiState.targetPercentage.toInt().toString()
+                                    showTargetScoreDialog = true
+                                },
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(text = "Target Exam Score", style = typography.bodySmall, color = colors.primaryText)
+                            Column {
+                                Text(text = "Target Exam Score", style = typography.bodySmall, color = colors.primaryText)
+                                Text(text = "Tap to edit target threshold", style = typography.caption, color = colors.mutedText)
+                            }
                             Text(text = "${uiState.targetPercentage.toInt()}%", style = typography.sectionTitle, color = colors.accentCyan)
                         }
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    dailyTargetInput = uiState.preferences.dailyTargetMinutes.toString()
+                                    showDailyTargetDialog = true
+                                },
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(text = "Daily Study Target", style = typography.bodySmall, color = colors.primaryText)
-                            Text(text = "${uiState.preferences.dailyTargetMinutes} min", style = typography.caption, color = colors.accent)
+                            Column {
+                                Text(text = "Daily Study Target", style = typography.bodySmall, color = colors.primaryText)
+                                Text(text = "Tap to adjust daily minutes", style = typography.caption, color = colors.mutedText)
+                            }
+                            Text(text = "${uiState.preferences.dailyTargetMinutes} min", style = typography.sectionTitle, color = colors.accent)
                         }
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    durationInput = uiState.preferences.defaultExamDurationMinutes.toString()
+                                    showDurationDialog = true
+                                },
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(text = "Default Exam Duration", style = typography.bodySmall, color = colors.primaryText)
-                            Text(text = "${uiState.preferences.defaultExamDurationMinutes} min", style = typography.caption, color = colors.mutedText)
+                            Column {
+                                Text(text = "Default Exam Duration", style = typography.bodySmall, color = colors.primaryText)
+                                Text(text = "Tap to set default duration", style = typography.caption, color = colors.mutedText)
+                            }
+                            Text(text = "${uiState.preferences.defaultExamDurationMinutes} min", style = typography.sectionTitle, color = colors.mutedText)
                         }
                     }
                 }
@@ -426,7 +410,7 @@ fun SettingsScreen(
                         )
                         Spacer(modifier = Modifier.height(spacing.xs))
                         Text(
-                            text = "Version 2.2.0 (The Offline Exam Operating System)",
+                            text = "Version 2.3.0 (The Offline Exam Operating System)",
                             style = typography.caption,
                             color = colors.mutedText
                         )
@@ -440,5 +424,107 @@ fun SettingsScreen(
                 }
             }
         }
+    }
+
+    if (showTargetScoreDialog) {
+        OS95Dialog(
+            title = "Set Target Exam Score",
+            confirmButtonText = "Save",
+            dismissButtonText = "Cancel",
+            onConfirm = {
+                val parsed = targetScoreInput.toFloatOrNull()
+                if (parsed != null && parsed in 50f..100f) {
+                    viewModel.setTargetPercentage(parsed)
+                    showTargetScoreDialog = false
+                }
+            },
+            onDismissRequest = { showTargetScoreDialog = false },
+            content = {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "Enter your goal score percentage (e.g. 95%):",
+                        style = typography.bodySmall,
+                        color = colors.secondaryText
+                    )
+                    Spacer(modifier = Modifier.height(spacing.m))
+                    OS95TextField(
+                        value = targetScoreInput,
+                        onValueChange = { targetScoreInput = it },
+                        label = "Target Percentage (%)",
+                        placeholder = "e.g. 95",
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        )
+    }
+
+    if (showDailyTargetDialog) {
+        OS95Dialog(
+            title = "Set Daily Study Target",
+            confirmButtonText = "Save",
+            dismissButtonText = "Cancel",
+            onConfirm = {
+                val parsed = dailyTargetInput.toIntOrNull()
+                if (parsed != null && parsed > 0) {
+                    viewModel.updateDailyTargetMinutes(parsed)
+                    showDailyTargetDialog = false
+                }
+            },
+            onDismissRequest = { showDailyTargetDialog = false },
+            content = {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "Enter daily deliberate practice target in minutes:",
+                        style = typography.bodySmall,
+                        color = colors.secondaryText
+                    )
+                    Spacer(modifier = Modifier.height(spacing.m))
+                    OS95TextField(
+                        value = dailyTargetInput,
+                        onValueChange = { dailyTargetInput = it },
+                        label = "Daily Minutes",
+                        placeholder = "e.g. 120",
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        )
+    }
+
+    if (showDurationDialog) {
+        OS95Dialog(
+            title = "Set Default Exam Duration",
+            confirmButtonText = "Save",
+            dismissButtonText = "Cancel",
+            onConfirm = {
+                val parsed = durationInput.toIntOrNull()
+                if (parsed != null && parsed > 0) {
+                    viewModel.updateDefaultExamDuration(parsed)
+                    showDurationDialog = false
+                }
+            },
+            onDismissRequest = { showDurationDialog = false },
+            content = {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "Enter default duration for practice exam papers in minutes:",
+                        style = typography.bodySmall,
+                        color = colors.secondaryText
+                    )
+                    Spacer(modifier = Modifier.height(spacing.m))
+                    OS95TextField(
+                        value = durationInput,
+                        onValueChange = { durationInput = it },
+                        label = "Duration (Minutes)",
+                        placeholder = "e.g. 90",
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        )
     }
 }

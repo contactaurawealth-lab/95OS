@@ -1,8 +1,12 @@
 package com.os95.app.features.papers
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -60,6 +64,22 @@ fun QuestionBankScreen(
     var questionText by remember { mutableStateOf("") }
     var marksText by remember { mutableStateOf("2.0") }
     var selectedDifficulty by remember { mutableStateOf("MEDIUM") }
+    var dialogSubjectId by remember { mutableStateOf("") }
+    if (dialogSubjectId.isBlank() && uiState.subjects.isNotEmpty()) {
+        dialogSubjectId = uiState.subjects.first().id
+    }
+    val dialogChaptersFlow = remember(dialogSubjectId) {
+        if (dialogSubjectId.isNotBlank()) viewModel.getChaptersForSubject(dialogSubjectId)
+        else kotlinx.coroutines.flow.flowOf(emptyList())
+    }
+    val dialogChapters by dialogChaptersFlow.collectAsState(initial = emptyList())
+    var dialogChapterId by remember { mutableStateOf("") }
+    LaunchedEffect(dialogChapters) {
+        if (dialogChapterId !in dialogChapters.map { it.id }) {
+            dialogChapterId = dialogChapters.firstOrNull()?.id ?: ""
+        }
+    }
+    var selectedQuestionType by remember { mutableStateOf("SHORT_ANSWER") }
 
     Column(
         modifier = modifier
@@ -215,21 +235,23 @@ fun QuestionBankScreen(
     }
 
     if (showAddDialog) {
-        val defaultSubjectId = uiState.subjects.firstOrNull()?.id ?: "general_subject"
+        val hasSubjects = uiState.subjects.isNotEmpty()
+        val hasChapters = dialogChapters.isNotEmpty()
+        val canSave = hasSubjects && hasChapters && questionText.isNotBlank() && dialogChapterId.isNotBlank()
+
         OS95Dialog(
             title = "Add Question to Bank",
-            message = "Enter question text and marks distribution:",
             confirmButtonText = "Save Question",
             onConfirm = {
-                if (questionText.isNotBlank()) {
-                    val marksVal = marksText.toFloatOrNull() ?: 1.0f
+                if (canSave) {
+                    val marksVal = marksText.toFloatOrNull() ?: 2.0f
                     viewModel.addQuestion(
-                        subjectId = defaultSubjectId,
-                        chapterId = "general_chapter",
-                        text = questionText,
+                        subjectId = dialogSubjectId,
+                        chapterId = dialogChapterId,
+                        text = questionText.trim(),
                         marks = marksVal,
                         difficulty = selectedDifficulty,
-                        questionType = "SHORT_ANSWER"
+                        questionType = selectedQuestionType
                     )
                     questionText = ""
                     showAddDialog = false
@@ -238,6 +260,176 @@ fun QuestionBankScreen(
             onDismissRequest = {
                 showAddDialog = false
                 questionText = ""
+            },
+            content = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    if (!hasSubjects) {
+                        Text(
+                            text = "Please create at least one Subject and Chapter in Syllabus first before adding questions.",
+                            style = typography.bodySmall,
+                            color = colors.warning
+                        )
+                    } else if (!hasChapters) {
+                        Text(
+                            text = "No chapters found for this subject. Please add a chapter in Syllabus first to link questions.",
+                            style = typography.bodySmall,
+                            color = colors.warning
+                        )
+                    } else {
+                        // Subject Selector Chips
+                        Text(
+                            text = "Subject",
+                            style = typography.caption,
+                            color = colors.secondaryText
+                        )
+                        Spacer(modifier = Modifier.height(spacing.xs))
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            uiState.subjects.forEach { s ->
+                                val isSel = dialogSubjectId == s.id
+                                Surface(
+                                    modifier = Modifier
+                                        .clip(shapes.small)
+                                        .clickable { dialogSubjectId = s.id },
+                                    shape = shapes.small,
+                                    color = if (isSel) colors.accent else colors.surface,
+                                    border = BorderStroke(1.dp, if (isSel) colors.accent else colors.border)
+                                ) {
+                                    Text(
+                                        text = s.name,
+                                        style = typography.caption,
+                                        color = if (isSel) colors.surface else colors.primaryText,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(spacing.m))
+
+                        // Chapter Selector Chips
+                        Text(
+                            text = "Chapter",
+                            style = typography.caption,
+                            color = colors.secondaryText
+                        )
+                        Spacer(modifier = Modifier.height(spacing.xs))
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            dialogChapters.forEach { c ->
+                                val isSel = dialogChapterId == c.id
+                                Surface(
+                                    modifier = Modifier
+                                        .clip(shapes.small)
+                                        .clickable { dialogChapterId = c.id },
+                                    shape = shapes.small,
+                                    color = if (isSel) colors.accent else colors.surface,
+                                    border = BorderStroke(1.dp, if (isSel) colors.accent else colors.border)
+                                ) {
+                                    Text(
+                                        text = c.name,
+                                        style = typography.caption,
+                                        color = if (isSel) colors.surface else colors.primaryText,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(spacing.m))
+
+                        // Question Text
+                        OS95TextField(
+                            value = questionText,
+                            onValueChange = { questionText = it },
+                            label = "Question Text",
+                            placeholder = "Enter question or problem statement...",
+                            singleLine = false
+                        )
+
+                        Spacer(modifier = Modifier.height(spacing.m))
+
+                        // Marks
+                        OS95TextField(
+                            value = marksText,
+                            onValueChange = { marksText = it },
+                            label = "Marks",
+                            placeholder = "e.g. 2.0"
+                        )
+
+                        Spacer(modifier = Modifier.height(spacing.m))
+
+                        // Difficulty Chips
+                        Text(
+                            text = "Difficulty",
+                            style = typography.caption,
+                            color = colors.secondaryText
+                        )
+                        Spacer(modifier = Modifier.height(spacing.xs))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            listOf("EASY", "MEDIUM", "HARD").forEach { diff ->
+                                val isSel = selectedDifficulty == diff
+                                Surface(
+                                    modifier = Modifier
+                                        .clip(shapes.small)
+                                        .clickable { selectedDifficulty = diff },
+                                    shape = shapes.small,
+                                    color = if (isSel) colors.accent else colors.surface,
+                                    border = BorderStroke(1.dp, if (isSel) colors.accent else colors.border)
+                                ) {
+                                    Text(
+                                        text = diff,
+                                        style = typography.caption,
+                                        color = if (isSel) colors.surface else colors.primaryText,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(spacing.m))
+
+                        // Type Chips
+                        Text(
+                            text = "Question Type",
+                            style = typography.caption,
+                            color = colors.secondaryText
+                        )
+                        Spacer(modifier = Modifier.height(spacing.xs))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            listOf("MCQ", "SHORT_ANSWER", "LONG_ANSWER").forEach { type ->
+                                val isSel = selectedQuestionType == type
+                                Surface(
+                                    modifier = Modifier
+                                        .clip(shapes.small)
+                                        .clickable { selectedQuestionType = type },
+                                    shape = shapes.small,
+                                    color = if (isSel) colors.accent else colors.surface,
+                                    border = BorderStroke(1.dp, if (isSel) colors.accent else colors.border)
+                                ) {
+                                    Text(
+                                        text = type.replace("_", " "),
+                                        style = typography.caption,
+                                        color = if (isSel) colors.surface else colors.primaryText,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
             }
         )
     }

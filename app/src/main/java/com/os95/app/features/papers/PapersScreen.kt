@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -59,7 +60,12 @@ import com.os95.app.core.ui.theme.OS95Theme
 import com.os95.app.domain.model.PaperDifficultyMode
 import com.os95.app.domain.model.QuestionResultInput
 import com.os95.app.domain.model.RepetitionPolicy
+import com.os95.app.domain.model.LossCategory
 import com.os95.app.domain.pdf.PrintableExamPaperFormatter
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.material3.Surface
+import androidx.compose.ui.draw.clip
 
 @Composable
 fun PapersScreen(
@@ -72,6 +78,7 @@ fun PapersScreen(
     val uiState by viewModel.uiState.collectAsState()
     val colors = OS95Theme.colors
     val typography = OS95Theme.typography
+    val shapes = OS95Theme.shapes
     val spacing = OS95Theme.spacing
 
     var showBuilderDialog by remember { mutableStateOf(false) }
@@ -574,28 +581,105 @@ fun PapersScreen(
                 uiState.activePaperQuestions.forEach { pq ->
                     val lostVal = lostMarksMap[pq.id] ?: 0f
                     val hasLost = lostVal > 0f
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                    val selectedCategory = lossCategoryMap[pq.id] ?: LossCategory.CARELESS_MISTAKE.name
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                color = if (hasLost) colors.surface else androidx.compose.ui.graphics.Color.Transparent,
+                                shape = shapes.small
+                            )
+                            .padding(6.dp)
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "${pq.snapshotQuestionText.take(35)}... [${pq.snapshotMarks.toInt()}m]",
-                                style = typography.caption,
-                                color = colors.primaryText
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "${pq.snapshotQuestionText.take(50)} [${pq.snapshotMarks.toInt()}m]",
+                                    style = typography.caption,
+                                    color = colors.primaryText
+                                )
+                            }
+                            Checkbox(
+                                checked = hasLost,
+                                onCheckedChange = { checked ->
+                                    if (checked) {
+                                        lostMarksMap[pq.id] = pq.snapshotMarks
+                                        if (!lossCategoryMap.containsKey(pq.id)) {
+                                            lossCategoryMap[pq.id] = LossCategory.CARELESS_MISTAKE.name
+                                        }
+                                    } else {
+                                        lostMarksMap.remove(pq.id)
+                                        lossCategoryMap.remove(pq.id)
+                                    }
+                                }
                             )
                         }
-                        Checkbox(
-                            checked = hasLost,
-                            onCheckedChange = { checked ->
-                                if (checked) {
-                                    lostMarksMap[pq.id] = 1.0f
-                                } else {
-                                    lostMarksMap.remove(pq.id)
+
+                        if (hasLost) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                OS95TextField(
+                                    value = if (lostVal > 0f) {
+                                        if (lostVal % 1f == 0f) lostVal.toInt().toString() else lostVal.toString()
+                                    } else "",
+                                    onValueChange = { input ->
+                                        val parsed = input.toFloatOrNull()
+                                        if (parsed != null && parsed >= 0f) {
+                                            val capped = minOf(parsed, pq.snapshotMarks)
+                                            lostMarksMap[pq.id] = capped
+                                        } else if (input.isBlank()) {
+                                            lostMarksMap[pq.id] = 0f
+                                        }
+                                    },
+                                    label = "Lost (Max ${pq.snapshotMarks.toInt()})",
+                                    singleLine = true,
+                                    modifier = Modifier.width(130.dp)
+                                )
+
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "Loss Reason",
+                                        style = typography.caption,
+                                        color = colors.mutedText
+                                    )
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .horizontalScroll(rememberScrollState()),
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        LossCategory.values().forEach { cat ->
+                                            val isSel = selectedCategory == cat.name
+                                            Surface(
+                                                modifier = Modifier
+                                                    .clip(shapes.small)
+                                                    .clickable { lossCategoryMap[pq.id] = cat.name },
+                                                shape = shapes.small,
+                                                color = if (isSel) colors.accent else colors.surface,
+                                                border = BorderStroke(1.dp, if (isSel) colors.accent else colors.border)
+                                            ) {
+                                                Text(
+                                                    text = cat.label,
+                                                    style = typography.caption,
+                                                    color = if (isSel) colors.surface else colors.primaryText,
+                                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                                )
+                                            }
+                                        }
+                                    }
                                 }
                             }
-                        )
+                        }
                     }
                 }
             }

@@ -2,11 +2,13 @@ package com.os95.app.features.mistakes
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.os95.app.core.database.entity.ChapterEntity
 import com.os95.app.core.database.entity.MistakeEntity
 import com.os95.app.core.database.entity.SubjectEntity
 import com.os95.app.domain.repository.MistakeRepository
 import com.os95.app.domain.repository.RecallRepository
 import com.os95.app.domain.repository.SyllabusRepository
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -51,8 +53,12 @@ class MistakesViewModel(
         }
     }
 
+    fun getChaptersForSubject(subjectId: String): Flow<List<ChapterEntity>> =
+        syllabusRepository.getChaptersForSubject(subjectId)
+
     fun recordMistake(
         subjectId: String,
+        chapterId: String,
         question: String,
         studentAnswer: String,
         correctAnswer: String,
@@ -63,7 +69,7 @@ class MistakesViewModel(
         viewModelScope.launch {
             mistakeRepository.recordMistake(
                 subjectId = subjectId,
-                chapterId = "general_chapter",
+                chapterId = chapterId,
                 topicId = null,
                 question = question.trim(),
                 studentAnswer = studentAnswer.trim(),

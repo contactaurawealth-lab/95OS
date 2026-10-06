@@ -285,11 +285,19 @@ fun RecallScreen(
                     }
                 }
             } else {
-                OS95EmptyState(
-                    title = "All caught up on Recall!",
-                    description = "No cards due for review today. Every card reviewed reinforces long-term exam retention and prevents memory decay.",
-                    icon = Icons.Outlined.CheckCircle
-                )
+                if (uiState.allCards.isEmpty()) {
+                    OS95EmptyState(
+                        title = "No Recall Cards Created Yet",
+                        description = "Add recall flashcards from Syllabus topics or convert errors from Mistake Bank to build your spaced repetition schedule.",
+                        icon = Icons.Outlined.Psychology
+                    )
+                } else {
+                    OS95EmptyState(
+                        title = "All caught up on Recall!",
+                        description = "No cards due for review today (${uiState.allCards.size} total cards scheduled). Next reviews will trigger automatically according to your forgetting curve.",
+                        icon = Icons.Outlined.CheckCircle
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(spacing.xl))

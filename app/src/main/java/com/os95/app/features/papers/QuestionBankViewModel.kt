@@ -2,10 +2,12 @@ package com.os95.app.features.papers
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.os95.app.core.database.entity.ChapterEntity
 import com.os95.app.core.database.entity.QuestionBankEntity
 import com.os95.app.core.database.entity.SubjectEntity
 import com.os95.app.domain.repository.PaperRepository
 import com.os95.app.domain.repository.SyllabusRepository
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -77,6 +79,9 @@ class QuestionBankViewModel(
         }
         _uiState.value = state.copy(filteredQuestions = filtered)
     }
+
+    fun getChaptersForSubject(subjectId: String): Flow<List<ChapterEntity>> =
+        syllabusRepository.getChaptersForSubject(subjectId)
 
     fun addQuestion(
         subjectId: String,

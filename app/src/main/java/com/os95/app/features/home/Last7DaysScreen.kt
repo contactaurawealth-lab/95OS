@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.os95.app.core.ui.component.OS95Button
 import com.os95.app.core.ui.component.OS95Card
+import com.os95.app.core.ui.component.OS95EmptyState
 import com.os95.app.core.ui.component.OS95IconButton
 import com.os95.app.core.ui.component.OS95LoadingState
 import com.os95.app.core.ui.component.OS95ProgressBar
@@ -103,12 +104,23 @@ fun Last7DaysScreen(
             }
         }
 
-        if (uiState.isLoading && uiState.dashboard == null) {
+        val dashboard = uiState.dashboard
+
+        if (uiState.isLoading && dashboard == null) {
             OS95LoadingState(message = "Calibrating final-week curriculum...")
             return
         }
 
-        val dashboard = uiState.dashboard ?: return
+        if (dashboard == null) {
+            OS95EmptyState(
+                title = "No 7-Day Sprint Plan Available",
+                description = "Configure your target exam date or syllabus subjects to activate your final-week high-yield sprint.",
+                icon = Icons.Outlined.Event,
+                primaryActionLabel = "Back to Command Center",
+                onPrimaryAction = onNavigateBack
+            )
+            return
+        }
 
         Column(
             modifier = Modifier

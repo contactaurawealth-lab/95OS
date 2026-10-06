@@ -85,7 +85,7 @@ class HomeViewModel(
                     targetScorePercentage = target
                 )
 
-                HomeUiState(
+                _uiState.value = _uiState.value.copy(
                     studentName = name,
                     targetPercentage = target,
                     metrics = metrics,
@@ -94,9 +94,7 @@ class HomeViewModel(
                     recentPapers = papers.take(5),
                     isLoading = false
                 )
-            }.collect { state ->
-                _uiState.value = state
-            }
+            }.collect { }
         }
 
         if (marksRecoveryRepository != null) {

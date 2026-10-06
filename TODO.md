@@ -1,8 +1,8 @@
 # Now
-- [ ] User feedback review and continuous feature refinement
+- [ ] Longitudinal student study analytics & extended reporting
 
 # Next
-- [ ] Longitudinal student study analytics & extended reporting
+- [ ] Advanced performance benchmarking & score target projections
 
 # Later
 - [ ] Optional BYOK AI sidecar assistance (strictly offline-isolated)
@@ -11,6 +11,22 @@
 - [ ] (No open bugs)
 
 # Completed
+- [x] UI / UX / System Audit Resolution (Phase 1, 2 & 3): Resolved all 15 audit issues across the 95OS offline suite:
+  - Fixed non-functional creation dialogs in Syllabus (`SyllabusScreens.kt`) with interactive text fields for Subject, Chapter, and Topic (with exam weightage selection chips).
+  - Resolved Question Bank and Mistake Bank dialogs with complete multi-selection forms and foreign-key safety against `SQLiteConstraintException` (`QuestionBankScreen.kt`, `MistakesScreen.kt`).
+  - Fixed `HomeViewModel.loadDashboardData()` state-loss race condition using `_uiState.value.copy(...)` to preserve command center snapshot, rescue plan, and recoverable marks.
+  - Implemented dynamic marks lost and full `LossCategory` picker in Diagnostic Exam Result Entry (`PapersScreen.kt`).
+  - Guarded Formula Vault against foreign key crashes when subjects lack chapters (`FormulaVaultScreen.kt`).
+  - Fixed 4-4-4-4 box breathing animation timing desync using synchronized continuous 4000ms tweening (`ExamDayProtocolScreen.kt`).
+  - Persisted packing checklist state across device rotation using `rememberSaveable` with a custom `Saver` (`ExamDayProtocolScreen.kt`).
+  - Added user feedback status banners in `HomeScreen.kt` and `MistakesScreen.kt`, preventing accidental PDF generation on dialog cancel.
+  - Resolved blank screen on `Last7DaysScreen.kt` when dashboard is null with informative `OS95EmptyState`.
+  - Distinguished empty states in `RecallScreen.kt` between 0 total cards created vs all cards caught up on due reviews.
+  - Made Study & Exam Targets in `SettingsScreen.kt` fully interactive and editable (Target Score %, Daily Study Target minutes, Default Exam Duration) with standard `OS95Dialog` forms.
+  - Prevented content clipping on small screens in `FocusScreen.kt` with `verticalScroll`.
+  - Added onboarding input validation for student name and subjects in `OnboardingScreen.kt`.
+  - Standardized all raw Material 3 dialogs to `OS95Dialog` across Settings and Exam screens.
+  - Verified clean compile and 100% test pass rate (`testDebugUnitTest` & `assembleDebug`).
 - [x] Full Database Sovereignty Backup & Restore Manager (`.95os` raw SQLite export/import with WAL checkpointing, binary header validation, and atomic swap)
 - [x] Session Navigation Safety: Jetpack Compose `BackHandler` protections for active sessions in `ExamSimulatorScreen`, `AdaptiveRetestScreen`, and `FocusScreen` with exit confirmation modals
 - [x] Syllabus Batch Mastery Progression: Chapter-level "Revise All" and "Master All" batch actions with optimized Room SQL execution

@@ -19,9 +19,17 @@ import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Print
 import androidx.compose.material.icons.outlined.Psychology
 import androidx.compose.material.icons.outlined.WarningAmber
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -35,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import com.os95.app.core.database.entity.ChapterEntity
 import com.os95.app.core.ui.component.OS95Button
 import com.os95.app.core.ui.component.OS95Card
 import com.os95.app.core.ui.component.OS95Dialog
@@ -42,8 +51,10 @@ import com.os95.app.core.ui.component.OS95EmptyState
 import com.os95.app.core.ui.component.OS95IconButton
 import com.os95.app.core.ui.component.OS95LoadingState
 import com.os95.app.core.ui.component.OS95OutlinedButton
+import com.os95.app.core.ui.component.OS95TextField
 import com.os95.app.core.ui.component.OS95TopBar
 import com.os95.app.core.ui.theme.OS95Theme
+import com.os95.app.domain.model.LossCategory
 
 @Composable
 fun MistakesScreen(
@@ -62,6 +73,29 @@ fun MistakesScreen(
     var printFeedbackMessage by remember { mutableStateOf<String?>(null) }
     var mistakeQuestion by remember { mutableStateOf("") }
     var correctAnswer by remember { mutableStateOf("") }
+    var studentAnswer by remember { mutableStateOf("") }
+    var marksLostText by remember { mutableStateOf("1.0") }
+    var selectedCategory by remember { mutableStateOf(LossCategory.CARELESS_MISTAKE) }
+    var dialogSubjectId by remember(uiState.subjects) {
+        mutableStateOf(uiState.subjects.firstOrNull()?.id ?: "")
+    }
+    var dialogChapters by remember { mutableStateOf<List<ChapterEntity>>(emptyList()) }
+    var dialogChapterId by remember { mutableStateOf("") }
+
+    LaunchedEffect(dialogSubjectId) {
+        if (dialogSubjectId.isNotBlank()) {
+            viewModel.getChaptersForSubject(dialogSubjectId).collect { chapters ->
+                dialogChapters = chapters
+                if (chapters.isNotEmpty() && (dialogChapterId.isBlank() || chapters.none { it.id == dialogChapterId })) {
+                    dialogChapterId = chapters.first().id
+                }
+            }
+        } else {
+            dialogChapters = emptyList()
+            dialogChapterId = ""
+        }
+    }
+
     val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
 
@@ -89,6 +123,41 @@ fun MistakesScreen(
                 )
             }
         )
+
+        val feedbackMsg = uiState.feedbackMessage ?: printFeedbackMessage
+        if (feedbackMsg != null) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 8.dp),
+                color = colors.surface,
+                shape = shapes.medium,
+                border = BorderStroke(1.dp, colors.accentCyan)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = feedbackMsg,
+                        style = typography.bodySmall,
+                        color = colors.primaryText,
+                        modifier = Modifier.weight(1f)
+                    )
+                    OS95IconButton(
+                        icon = Icons.Outlined.Close,
+                        contentDescription = "Dismiss",
+                        onClick = {
+                            viewModel.clearFeedback()
+                            printFeedbackMessage = null
+                        }
+                    )
+                }
+            }
+        }
 
         if (uiState.isLoading) {
             OS95LoadingState(message = "Loading mistake logs...")
@@ -226,23 +295,29 @@ fun MistakesScreen(
     }
 
     if (showAddDialog) {
-        val defaultSubjectId = uiState.subjects.firstOrNull()?.id ?: "general_subject"
+        val hasSubjects = uiState.subjects.isNotEmpty()
+        val hasChapters = dialogChapters.isNotEmpty()
+        val canSave = hasSubjects && hasChapters && mistakeQuestion.isNotBlank() && correctAnswer.isNotBlank() && dialogChapterId.isNotBlank()
+
         OS95Dialog(
             title = "Log Test Mistake",
-            message = "Enter question text and correct answer:",
-            confirmButtonText = "Save",
+            confirmButtonText = "Save Mistake",
             onConfirm = {
-                if (mistakeQuestion.isNotBlank() && correctAnswer.isNotBlank()) {
+                if (canSave) {
+                    val marksVal = marksLostText.toFloatOrNull() ?: 1.0f
                     viewModel.recordMistake(
-                        subjectId = defaultSubjectId,
-                        question = mistakeQuestion,
-                        studentAnswer = "",
-                        correctAnswer = correctAnswer,
-                        category = "CARELESS_MISTAKE",
-                        marksLost = 1.0f
+                        subjectId = dialogSubjectId,
+                        chapterId = dialogChapterId,
+                        question = mistakeQuestion.trim(),
+                        studentAnswer = studentAnswer.trim(),
+                        correctAnswer = correctAnswer.trim(),
+                        category = selectedCategory.name,
+                        marksLost = marksVal
                     )
                     mistakeQuestion = ""
                     correctAnswer = ""
+                    studentAnswer = ""
+                    marksLostText = "1.0"
                     showAddDialog = false
                 }
             },
@@ -250,6 +325,179 @@ fun MistakesScreen(
                 showAddDialog = false
                 mistakeQuestion = ""
                 correctAnswer = ""
+                studentAnswer = ""
+            },
+            content = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    if (!hasSubjects) {
+                        Text(
+                            text = "Please create at least one Subject and Chapter in Syllabus first before logging mistakes.",
+                            style = typography.bodySmall,
+                            color = colors.warning
+                        )
+                    } else if (!hasChapters) {
+                        Text(
+                            text = "No chapters found for this subject. Please add a chapter in Syllabus first to link mistakes.",
+                            style = typography.bodySmall,
+                            color = colors.warning
+                        )
+                    } else {
+                        // Subject Selector Chips
+                        Text(
+                            text = "Subject",
+                            style = typography.caption,
+                            color = colors.secondaryText
+                        )
+                        Spacer(modifier = Modifier.height(spacing.xs))
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            uiState.subjects.forEach { s ->
+                                val isSel = dialogSubjectId == s.id
+                                Surface(
+                                    modifier = Modifier
+                                        .clip(shapes.small)
+                                        .clickable { dialogSubjectId = s.id },
+                                    shape = shapes.small,
+                                    color = if (isSel) colors.accent else colors.surface,
+                                    border = BorderStroke(1.dp, if (isSel) colors.accent else colors.border)
+                                ) {
+                                    Text(
+                                        text = s.name,
+                                        style = typography.caption,
+                                        color = if (isSel) colors.surface else colors.primaryText,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(spacing.m))
+
+                        // Chapter Selector Chips
+                        Text(
+                            text = "Chapter",
+                            style = typography.caption,
+                            color = colors.secondaryText
+                        )
+                        Spacer(modifier = Modifier.height(spacing.xs))
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            dialogChapters.forEach { c ->
+                                val isSel = dialogChapterId == c.id
+                                Surface(
+                                    modifier = Modifier
+                                        .clip(shapes.small)
+                                        .clickable { dialogChapterId = c.id },
+                                    shape = shapes.small,
+                                    color = if (isSel) colors.accent else colors.surface,
+                                    border = BorderStroke(1.dp, if (isSel) colors.accent else colors.border)
+                                ) {
+                                    Text(
+                                        text = c.name,
+                                        style = typography.caption,
+                                        color = if (isSel) colors.surface else colors.primaryText,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(spacing.m))
+
+                        // Question input
+                        OS95TextField(
+                            value = mistakeQuestion,
+                            onValueChange = { mistakeQuestion = it },
+                            label = "Question Text",
+                            placeholder = "Enter question or problem description...",
+                            singleLine = false,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Spacer(modifier = Modifier.height(spacing.m))
+
+                        // Correct Answer input
+                        OS95TextField(
+                            value = correctAnswer,
+                            onValueChange = { correctAnswer = it },
+                            label = "Correct Answer / Ideal Working",
+                            placeholder = "Enter expected step/solution...",
+                            singleLine = false,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Spacer(modifier = Modifier.height(spacing.m))
+
+                        // Student Answer input
+                        OS95TextField(
+                            value = studentAnswer,
+                            onValueChange = { studentAnswer = it },
+                            label = "Your Answer (What went wrong)",
+                            placeholder = "Enter your answer or skipped step...",
+                            singleLine = false,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Spacer(modifier = Modifier.height(spacing.m))
+
+                        // Marks Lost
+                        OS95TextField(
+                            value = marksLostText,
+                            onValueChange = { marksLostText = it },
+                            label = "Marks Lost",
+                            placeholder = "e.g. 1.0, 2.0, 5.0",
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Spacer(modifier = Modifier.height(spacing.m))
+
+                        // Loss Category Selector Chips
+                        Text(
+                            text = "Error Category",
+                            style = typography.caption,
+                            color = colors.secondaryText
+                        )
+                        Spacer(modifier = Modifier.height(spacing.xs))
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            LossCategory.values().forEach { cat ->
+                                val isSel = selectedCategory == cat
+                                Surface(
+                                    modifier = Modifier
+                                        .clip(shapes.small)
+                                        .clickable { selectedCategory = cat },
+                                    shape = shapes.small,
+                                    color = if (isSel) colors.accent else colors.surface,
+                                    border = BorderStroke(1.dp, if (isSel) colors.accent else colors.border)
+                                ) {
+                                    Text(
+                                        text = cat.label,
+                                        style = typography.caption,
+                                        color = if (isSel) colors.surface else colors.primaryText,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
             }
         )
     }
@@ -264,7 +512,7 @@ fun MistakesScreen(
         }
 
         OS95Dialog(
-            title = "Print Remediation Sheet",
+            title = "Remediation Sheet Export",
             message = "Generate an offline study sheet of your ${uiState.activeMistakes.size} unmastered mistakes to eliminate recurring errors.",
             confirmButtonText = "Copy Markdown",
             onConfirm = {
@@ -273,13 +521,31 @@ fun MistakesScreen(
                 showPrintDialog = false
             },
             onDismissRequest = {
-                try {
-                    val pdfFile = generator.generateMistakeRemediationPdf(context, uiState.activeMistakes, subjectNames)
-                    printFeedbackMessage = "Exported PDF (${pdfFile.length() / 1024} KB) to cache: ${pdfFile.name}"
-                } catch (e: Exception) {
-                    printFeedbackMessage = "PDF Generation failed: ${e.message}"
-                }
                 showPrintDialog = false
+            },
+            content = {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "You can copy markdown notes to your clipboard, or save a PDF document to disk for physical printing.",
+                        style = typography.caption,
+                        color = colors.secondaryText
+                    )
+                    Spacer(modifier = Modifier.height(spacing.m))
+                    OS95OutlinedButton(
+                        text = "Generate PDF Document",
+                        icon = Icons.Outlined.Print,
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            try {
+                                val pdfFile = generator.generateMistakeRemediationPdf(context, uiState.activeMistakes, subjectNames)
+                                printFeedbackMessage = "Exported PDF (${pdfFile.length() / 1024} KB) to cache: ${pdfFile.name}"
+                            } catch (e: Exception) {
+                                printFeedbackMessage = "PDF Generation failed: ${e.message}"
+                            }
+                            showPrintDialog = false
+                        }
+                    )
+                }
             }
         )
     }

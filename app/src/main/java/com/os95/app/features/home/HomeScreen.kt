@@ -34,8 +34,11 @@ import androidx.compose.material.icons.outlined.Speed
 import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material.icons.automirrored.outlined.TrendingUp
 import androidx.compose.material.icons.outlined.WarningAmber
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -126,6 +129,36 @@ fun HomeScreen(
                     contentDescription = "Settings",
                     onClick = onNavigateToSettings
                 )
+            }
+        }
+
+        if (uiState.feedbackMessage != null) {
+            Spacer(modifier = Modifier.height(12.dp))
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = colors.surface,
+                shape = shapes.medium,
+                border = BorderStroke(1.dp, colors.accentCyan)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = uiState.feedbackMessage!!,
+                        style = typography.bodySmall,
+                        color = colors.primaryText,
+                        modifier = Modifier.weight(1f)
+                    )
+                    OS95IconButton(
+                        icon = Icons.Outlined.Close,
+                        contentDescription = "Dismiss",
+                        onClick = { viewModel.clearFeedback() }
+                    )
+                }
             }
         }
 
@@ -471,6 +504,66 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(10.dp))
 
+        // Row 4: Exam Papers + Mistake Bank
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            // Papers Tile
+            OS95Card(
+                modifier = Modifier.weight(1f),
+                onClick = onNavigateToPapers
+            ) {
+                Column {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Outlined.Assignment,
+                        contentDescription = null,
+                        tint = colors.accent,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Exam Papers",
+                        style = typography.sectionTitle,
+                        color = colors.primaryText
+                    )
+                    Text(
+                        text = "${uiState.recentPapers.size} papers logged",
+                        style = typography.caption,
+                        color = colors.mutedText
+                    )
+                }
+            }
+
+            // Mistake Bank Tile
+            OS95Card(
+                modifier = Modifier.weight(1f),
+                onClick = onNavigateToMistakes
+            ) {
+                Column {
+                    Icon(
+                        imageVector = Icons.Outlined.WarningAmber,
+                        contentDescription = null,
+                        tint = colors.accentCyan,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Mistake Bank",
+                        style = typography.sectionTitle,
+                        color = colors.primaryText
+                    )
+                    Text(
+                        text = "Remediate errors",
+                        style = typography.caption,
+                        color = colors.mutedText
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
         // 15-Minute Rescue Mode Banner
         OS95Card(
             modifier = Modifier.fillMaxWidth(),
@@ -577,20 +670,34 @@ fun HomeScreen(
         // Weakest Chapters Spotlight
         if (cc?.topThreeWeakChapters?.isNotEmpty() == true) {
             Spacer(modifier = Modifier.height(16.dp))
-            OS95Card(modifier = Modifier.fillMaxWidth()) {
+            OS95Card(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = onNavigateToMistakes
+            ) {
                 Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Outlined.WarningAmber,
-                            contentDescription = null,
-                            tint = colors.warning,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Outlined.WarningAmber,
+                                contentDescription = null,
+                                tint = colors.warning,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "TOP WEAKNESS SPOTLIGHT",
+                                style = typography.caption,
+                                color = colors.warning
+                            )
+                        }
                         Text(
-                            text = "TOP WEAKNESS SPOTLIGHT",
+                            text = "Review Mistakes →",
                             style = typography.caption,
-                            color = colors.warning
+                            color = colors.mutedText
                         )
                     }
                     Spacer(modifier = Modifier.height(8.dp))

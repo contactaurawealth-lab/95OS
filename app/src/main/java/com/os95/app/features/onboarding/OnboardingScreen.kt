@@ -139,7 +139,8 @@ fun OnboardingScreen(
                             value = uiState.studentName,
                             onValueChange = { viewModel.setStudentName(it) },
                             label = "Student Name",
-                            placeholder = "e.g. Alex Gandhi"
+                            placeholder = "e.g. Alex Gandhi",
+                            helperText = if (uiState.studentName.isBlank()) "Required to initialize your local student profile" else null
                         )
 
                         OS95TextField(
@@ -277,7 +278,15 @@ fun OnboardingScreen(
                             Text(
                                 text = "${uiState.selectedSubjects.size} Enrolled",
                                 style = typography.sectionTitle,
-                                color = colors.accentCyan
+                                color = if (uiState.selectedSubjects.isEmpty()) colors.warning else colors.accentCyan
+                            )
+                        }
+
+                        if (uiState.selectedSubjects.isEmpty()) {
+                            Text(
+                                text = "Please select at least 1 subject to build your syllabus.",
+                                style = typography.caption,
+                                color = colors.warning
                             )
                         }
 
@@ -577,6 +586,13 @@ fun OnboardingScreen(
 
         Spacer(modifier = Modifier.height(spacing.m))
 
+        val isNextEnabled = when (uiState.step) {
+            OnboardingStep.PROFILE -> uiState.studentName.isNotBlank()
+            OnboardingStep.SUBJECTS -> uiState.selectedSubjects.isNotEmpty()
+            OnboardingStep.SUMMARY -> uiState.selectedSubjects.isNotEmpty() && uiState.studentName.isNotBlank()
+            else -> true
+        }
+
         // Navigation controls
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -595,11 +611,13 @@ fun OnboardingScreen(
             if (uiState.step == OnboardingStep.SUMMARY) {
                 OS95Button(
                     text = "Launch 95OS",
+                    enabled = isNextEnabled,
                     onClick = { viewModel.completeOnboarding(onComplete) }
                 )
             } else {
                 OS95Button(
                     text = "Continue",
+                    enabled = isNextEnabled,
                     onClick = { viewModel.nextStep() }
                 )
             }

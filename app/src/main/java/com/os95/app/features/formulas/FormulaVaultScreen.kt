@@ -529,6 +529,13 @@ private fun AddFormulaDialog(
                             }
                         }
                     }
+                } else {
+                    Text(
+                        text = "This subject has no chapters. Please create a chapter under this subject in Syllabus first before adding formulas.",
+                        style = typography.caption,
+                        color = colors.warning,
+                        modifier = Modifier.padding(vertical = 4.dp)
+                    )
                 }
 
                 // Title
@@ -592,16 +599,18 @@ private fun AddFormulaDialog(
             }
         },
         confirmButton = {
+            val sId = selectedSubject?.id ?: ""
+            val cId = selectedChapterId.ifBlank { chapters.firstOrNull()?.id ?: "" }
+            val canSave = sId.isNotBlank() && chapters.isNotEmpty() && cId.isNotBlank() && title.isNotBlank() && expression.isNotBlank()
+
             OS95Button(
                 text = "Save Formula",
                 onClick = {
-                    val sId = selectedSubject?.id ?: ""
-                    val cId = selectedChapterId.ifBlank { chapters.firstOrNull()?.id ?: "general_chapter" }
-                    if (sId.isNotBlank() && title.isNotBlank() && expression.isNotBlank()) {
+                    if (canSave) {
                         onAdd(sId, cId, title, expression, explanation, relevance)
                     }
                 },
-                enabled = selectedSubject != null && title.isNotBlank() && expression.isNotBlank()
+                enabled = canSave
             )
         },
         dismissButton = {

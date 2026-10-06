@@ -1,8 +1,10 @@
 package com.os95.app.features.syllabus
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.material3.Surface
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -137,11 +139,10 @@ fun SyllabusScreen(
     if (showAddSubjectDialog) {
         OS95Dialog(
             title = "Add Subject",
-            message = "Enter the name of your subject:",
             confirmButtonText = "Create",
             onConfirm = {
                 if (newSubjectName.isNotBlank()) {
-                    viewModel.addSubject(newSubjectName)
+                    viewModel.addSubject(newSubjectName.trim())
                     newSubjectName = ""
                     showAddSubjectDialog = false
                 }
@@ -149,6 +150,14 @@ fun SyllabusScreen(
             onDismissRequest = {
                 showAddSubjectDialog = false
                 newSubjectName = ""
+            },
+            content = {
+                OS95TextField(
+                    value = newSubjectName,
+                    onValueChange = { newSubjectName = it },
+                    label = "Subject Name",
+                    placeholder = "e.g. Mathematics"
+                )
             }
         )
     }
@@ -236,11 +245,10 @@ fun SubjectDetailScreen(
     if (showAddChapterDialog) {
         OS95Dialog(
             title = "Add Chapter",
-            message = "Enter chapter or unit name:",
             confirmButtonText = "Create",
             onConfirm = {
                 if (newChapterName.isNotBlank()) {
-                    viewModel.addChapter(subjectId, newChapterName)
+                    viewModel.addChapter(subjectId, newChapterName.trim())
                     newChapterName = ""
                     showAddChapterDialog = false
                 }
@@ -248,6 +256,14 @@ fun SubjectDetailScreen(
             onDismissRequest = {
                 showAddChapterDialog = false
                 newChapterName = ""
+            },
+            content = {
+                OS95TextField(
+                    value = newChapterName,
+                    onValueChange = { newChapterName = it },
+                    label = "Chapter Name",
+                    placeholder = "e.g. Differentiation"
+                )
             }
         )
     }
@@ -387,11 +403,10 @@ fun ChapterDetailScreen(
     if (showAddTopicDialog) {
         OS95Dialog(
             title = "Add Topic",
-            message = "Enter topic title:",
             confirmButtonText = "Create",
             onConfirm = {
                 if (newTopicName.isNotBlank()) {
-                    viewModel.addTopic(chapterId, newTopicName, selectedRelevance)
+                    viewModel.addTopic(chapterId, newTopicName.trim(), selectedRelevance)
                     newTopicName = ""
                     showAddTopicDialog = false
                 }
@@ -399,6 +414,43 @@ fun ChapterDetailScreen(
             onDismissRequest = {
                 showAddTopicDialog = false
                 newTopicName = ""
+            },
+            content = {
+                Column {
+                    OS95TextField(
+                        value = newTopicName,
+                        onValueChange = { newTopicName = it },
+                        label = "Topic Title",
+                        placeholder = "e.g. Chain Rule"
+                    )
+                    Spacer(modifier = Modifier.height(spacing.m))
+                    Text(
+                        text = "Exam Weightage",
+                        style = typography.caption,
+                        color = colors.secondaryText
+                    )
+                    Spacer(modifier = Modifier.height(spacing.xs))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf("HIGH", "MEDIUM", "LOW").forEach { rel ->
+                            val isSel = selectedRelevance == rel
+                            Surface(
+                                modifier = Modifier
+                                    .clip(shapes.small)
+                                    .clickable { selectedRelevance = rel },
+                                shape = shapes.small,
+                                color = if (isSel) colors.accent else colors.surface,
+                                border = BorderStroke(1.dp, if (isSel) colors.accent else colors.border)
+                            ) {
+                                Text(
+                                    text = "$rel YIELD",
+                                    style = typography.caption,
+                                    color = if (isSel) colors.surface else colors.primaryText,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                )
+                            }
+                        }
+                    }
+                }
             }
         )
     }

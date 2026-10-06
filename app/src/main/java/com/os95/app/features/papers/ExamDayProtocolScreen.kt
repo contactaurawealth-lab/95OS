@@ -46,6 +46,8 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.Saver
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -88,7 +90,16 @@ fun ExamDayProtocolScreen(
     val spacing = OS95Theme.spacing
 
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
-    val checkedItems = remember { mutableStateMapOf<String, Boolean>() }
+    val checkedItems = rememberSaveable(
+        saver = Saver(
+            save = { it.toMap() },
+            restore = { saved ->
+                mutableStateMapOf<String, Boolean>().apply {
+                    putAll(saved)
+                }
+            }
+        )
+    ) { mutableStateMapOf<String, Boolean>() }
 
     Column(
         modifier = modifier
@@ -454,22 +465,33 @@ private fun CognitivePrimingTabContent() {
         while (isBreathingActive) {
             // Phase 1: Inhale 4s
             breathPhase = "Inhale slowly"
+            val inhaleJob = launch {
+                breathScale.animateTo(1.25f, tween(4000, easing = LinearEasing))
+            }
             for (i in 1..4) {
                 secondsInPhase = i
-                breathScale.animateTo(1.25f, tween(1000, easing = LinearEasing))
+                delay(1000)
             }
+            inhaleJob.join()
+
             // Phase 2: Hold 4s
             breathPhase = "Hold breath"
             for (i in 1..4) {
                 secondsInPhase = i
                 delay(1000)
             }
+
             // Phase 3: Exhale 4s
             breathPhase = "Exhale slowly"
+            val exhaleJob = launch {
+                breathScale.animateTo(1.0f, tween(4000, easing = LinearEasing))
+            }
             for (i in 1..4) {
                 secondsInPhase = i
-                breathScale.animateTo(1.0f, tween(1000, easing = LinearEasing))
+                delay(1000)
             }
+            exhaleJob.join()
+
             // Phase 4: Hold 4s
             breathPhase = "Hold empty"
             for (i in 1..4) {
