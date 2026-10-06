@@ -1,5 +1,6 @@
 package com.os95.app.features.focus
 
+import java.util.Locale
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -42,7 +43,7 @@ fun FocusScreen(
 
     val minutes = uiState.remainingSeconds / 60
     val seconds = uiState.remainingSeconds % 60
-    val timeFormatted = "%02d:%02d".format(minutes, seconds)
+    val timeFormatted = String.format(Locale.US, "%02d:%02d", minutes, seconds)
 
     Column(
         modifier = modifier

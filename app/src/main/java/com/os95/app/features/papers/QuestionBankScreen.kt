@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -20,6 +21,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.QuestionAnswer
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -46,7 +48,8 @@ import com.os95.app.core.ui.theme.OS95Theme
 fun QuestionBankScreen(
     viewModel: QuestionBankViewModel,
     onNavigateBack: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onNavigateToCsvImport: (() -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val colors = OS95Theme.colors
@@ -68,6 +71,13 @@ fun QuestionBankScreen(
             subtitle = "${uiState.filteredQuestions.size} Questions",
             onBack = onNavigateBack,
             actions = {
+                if (onNavigateToCsvImport != null) {
+                    OS95IconButton(
+                        icon = androidx.compose.material.icons.Icons.Outlined.Description,
+                        contentDescription = "Import CSV",
+                        onClick = onNavigateToCsvImport
+                    )
+                }
                 OS95IconButton(
                     icon = Icons.Outlined.Add,
                     contentDescription = "Add Question",
@@ -103,10 +113,12 @@ fun QuestionBankScreen(
                     val isSelected = uiState.selectedDifficulty == diff
                     Box(
                         modifier = Modifier
+                            .defaultMinSize(minHeight = 44.dp)
                             .clip(shapes.pill)
                             .background(if (isSelected) colors.accent else colors.cardBackground)
                             .clickable { viewModel.setDifficultyFilter(diff) }
-                            .padding(horizontal = 14.dp, vertical = 6.dp)
+                            .padding(horizontal = 14.dp, vertical = 6.dp),
+                        contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = label,

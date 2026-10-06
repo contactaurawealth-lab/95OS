@@ -96,11 +96,11 @@ fun OS95EmptyState(
 
 @Composable
 fun OS95ErrorState(
+    modifier: Modifier = Modifier,
     title: String = "Something couldn't be loaded",
     message: String = "Your saved progress and offline data are completely safe.",
     retryLabel: String? = "Try Again",
-    onRetry: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
+    onRetry: (() -> Unit)? = null
 ) {
     val colors = OS95Theme.colors
     val typography = OS95Theme.typography

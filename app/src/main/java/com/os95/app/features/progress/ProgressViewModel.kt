@@ -2,30 +2,35 @@ package com.os95.app.features.progress
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.os95.app.core.database.entity.ExamResultEntity
-import com.os95.app.domain.engine.Target95Engine
 import com.os95.app.domain.engine.Target95Metrics
-import com.os95.app.domain.repository.MistakeRepository
-import com.os95.app.domain.repository.PaperRepository
+import com.os95.app.domain.model.MarksRecoverySnapshot
+import com.os95.app.domain.repository.MarksRecoveryRepository
 import com.os95.app.domain.repository.StudentRepository
-import com.os95.app.domain.repository.SyllabusRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
+enum class ProgressTab(val label: String) {
+    MARKS_GAP("Marks Gap"),
+    FORGETTING_RADAR("Forgetting Radar"),
+    PAPER_ANALYSIS("Paper Analysis"),
+    RECOVERY_SCORE("Recovery Score")
+}
+
 data class ProgressUiState(
+    val selectedTab: ProgressTab = ProgressTab.MARKS_GAP,
+    val snapshot: MarksRecoverySnapshot? = null,
     val metrics: Target95Metrics = Target95Metrics(0f, 95f, 95f, 0f, 0f, 0f, 0),
-    val examResults: List<ExamResultEntity> = emptyList(),
-    val isLoading: Boolean = true
+    val targetPercentage: Float = 95.0f,
+    val isLoading: Boolean = true,
+    val feedbackMessage: String? = null
 )
 
 class ProgressViewModel(
-    private val studentRepository: StudentRepository,
-    private val syllabusRepository: SyllabusRepository,
-    private val paperRepository: PaperRepository,
-    private val mistakeRepository: MistakeRepository
+    private val marksRecoveryRepository: MarksRecoveryRepository,
+    private val studentRepository: StudentRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProgressUiState())
@@ -37,36 +42,53 @@ class ProgressViewModel(
 
     private fun loadData() {
         viewModelScope.launch {
-            combine(
-                studentRepository.getProfileFlow(),
-                syllabusRepository.getMasteredTopicsCount(),
-                syllabusRepository.getTotalTopicsCount(),
-                paperRepository.getAllResults(),
-                mistakeRepository.getAllMistakes()
-            ) { profile, masteredTopics, totalTopics, results, mistakes ->
-                val target = profile?.targetPercentage ?: 95.0f
-                val scores = results.map { Pair(it.marksObtained, it.totalMarks) }
-                val lostMarks = mistakes.filter { !it.isResolved }.sumOf { it.marksLost.toDouble() }.toFloat()
-                val recoveredMarks = mistakes.filter { it.isResolved }.sumOf { it.marksLost.toDouble() }.toFloat()
-
-                val metrics = Target95Engine.calculateMetrics(
-                    latestExamScores = scores,
-                    totalLostMarks = lostMarks,
-                    recoveredMarks = recoveredMarks,
-                    masteredTopicsCount = masteredTopics,
-                    totalTopicsCount = totalTopics,
-                    totalStudyMinutes = 0,
-                    targetScorePercentage = target
+            marksRecoveryRepository.getRecoverySnapshotFlow().collectLatest { snapshot ->
+                val target = snapshot.marksGap.targetPercentage
+                val metrics = Target95Metrics(
+                    currentScorePercentage = snapshot.marksGap.currentPercentage,
+                    targetScorePercentage = target,
+                    marksGapPercentage = snapshot.marksGap.percentageGap,
+                    totalLostMarks = snapshot.marksGap.potentialRecoverableMarks,
+                    recoveredMarks = snapshot.recoveryScore.totalRecoveredMarks,
+                    syllabusCompletionPercentage = 0f,
+                    totalStudyMinutes = 0
                 )
-
-                ProgressUiState(
+                _uiState.value = _uiState.value.copy(
+                    snapshot = snapshot,
                     metrics = metrics,
-                    examResults = results,
+                    targetPercentage = target,
                     isLoading = false
                 )
-            }.collect { state ->
-                _uiState.value = state
             }
         }
+    }
+
+    fun selectTab(tab: ProgressTab) {
+        _uiState.value = _uiState.value.copy(selectedTab = tab)
+    }
+
+    fun completeRescueSession(
+        durationMinutes: Int,
+        actionsCompleted: Int,
+        topicsCovered: Int,
+        cardsReviewed: Int,
+        mistakesResolved: Int
+    ) {
+        viewModelScope.launch {
+            marksRecoveryRepository.completeRescueSession(
+                durationMinutes = durationMinutes,
+                actionsCompleted = actionsCompleted,
+                topicsCovered = topicsCovered,
+                cardsReviewed = cardsReviewed,
+                mistakesResolved = mistakesResolved
+            )
+            _uiState.value = _uiState.value.copy(
+                feedbackMessage = "Completed $durationMinutes-min Rescue Session! History updated."
+            )
+        }
+    }
+
+    fun clearFeedback() {
+        _uiState.value = _uiState.value.copy(feedbackMessage = null)
     }
 }

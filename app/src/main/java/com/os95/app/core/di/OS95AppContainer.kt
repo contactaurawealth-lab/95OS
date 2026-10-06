@@ -34,7 +34,11 @@ class OS95AppContainer(context: Context) {
     }
 
     val paperRepository: PaperRepository by lazy {
-        OfflinePaperRepository(database.paperPilotDao())
+        OfflinePaperRepository(
+            dao = database.paperPilotDao(),
+            syllabusDao = database.syllabusDao(),
+            mistakeDao = database.mistakeDao()
+        )
     }
 
     val mistakeRepository: MistakeRepository by lazy {
@@ -49,7 +53,27 @@ class OS95AppContainer(context: Context) {
         )
     }
 
+    val marksRecoveryEngine: com.os95.app.domain.engine.MarksRecoveryEngine by lazy {
+        com.os95.app.domain.engine.MarksRecoveryEngine()
+    }
+
+    val marksRecoveryRepository: com.os95.app.domain.repository.MarksRecoveryRepository by lazy {
+        com.os95.app.data.repository.OfflineMarksRecoveryRepository(
+            engine = marksRecoveryEngine,
+            studentDao = database.studentDao(),
+            syllabusDao = database.syllabusDao(),
+            paperDao = database.paperPilotDao(),
+            mistakeDao = database.mistakeDao(),
+            recallDao = database.recallDao(),
+            sessionDao = database.studySessionDao()
+        )
+    }
+
+    val universalCsvEngine: com.os95.app.core.csv.UniversalCsvEngine by lazy {
+        com.os95.app.core.csv.UniversalCsvEngine()
+    }
+
     val csvProcessor: UniversalCsvProcessor by lazy {
-        DefaultUniversalCsvProcessor()
+        DefaultUniversalCsvProcessor(universalCsvEngine)
     }
 }

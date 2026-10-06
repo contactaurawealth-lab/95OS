@@ -23,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.os95.app.core.ui.theme.OS95Theme
 
@@ -123,7 +124,9 @@ fun OS95BottomBar(
                     label = {
                         Text(
                             text = item.title,
-                            style = typography.caption
+                            style = typography.caption,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     },
                     colors = NavigationBarItemDefaults.colors(

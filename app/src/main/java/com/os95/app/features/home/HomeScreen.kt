@@ -16,12 +16,20 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.automirrored.outlined.Assignment
 import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.ElectricBolt
 import androidx.compose.material.icons.outlined.Psychology
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material.icons.outlined.TrendingUp
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.os95.app.core.ui.component.OS95Dialog
+import com.os95.app.domain.model.RescueActionType
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -58,6 +66,7 @@ fun HomeScreen(
     val shapes = OS95Theme.shapes
     val spacing = OS95Theme.spacing
     val scrollState = rememberScrollState()
+    var showRescueDialog by remember { mutableStateOf(false) }
 
     if (uiState.isLoading) {
         OS95LoadingState(message = "Initializing 95OS Command Center...")
@@ -222,6 +231,53 @@ fun HomeScreen(
             }
         }
 
+        Spacer(modifier = Modifier.height(spacing.m))
+
+        // 15-Minute Rescue Mode Priority Card
+        OS95Card(
+            modifier = Modifier.fillMaxWidth(),
+            backgroundColor = colors.surface,
+            onClick = { showRescueDialog = true }
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Outlined.ElectricBolt,
+                        contentDescription = null,
+                        tint = colors.accent,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "15-Minute Rescue Mode",
+                            style = typography.sectionTitle,
+                            color = colors.primaryText
+                        )
+                        Text(
+                            text = if (uiState.potentialRecoverableMarks > 0f) {
+                                "+${uiState.potentialRecoverableMarks.toInt()}m recoverable • ${uiState.criticalTopicsCount} topics at risk"
+                            } else {
+                                "High-impact rapid prep right now"
+                            },
+                            style = typography.caption,
+                            color = colors.mutedText
+                        )
+                    }
+                }
+                Icon(
+                    imageVector = Icons.AutoMirrored.Outlined.ArrowForward,
+                    contentDescription = null,
+                    tint = colors.mutedText,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+
         Spacer(modifier = Modifier.height(spacing.xl))
 
         // Syllabus Progress Section
@@ -321,6 +377,68 @@ fun HomeScreen(
                                 text = paper.status,
                                 style = typography.caption,
                                 color = colors.accent
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (showRescueDialog) {
+        val rescuePlan = uiState.rescuePlan
+        OS95Dialog(
+            title = "15-Minute Rescue Mode",
+            confirmButtonText = "Complete Session",
+            dismissButtonText = "Dismiss",
+            onConfirm = {
+                viewModel.completeRescueSession(15)
+                showRescueDialog = false
+            },
+            onDismissRequest = { showRescueDialog = false }
+        ) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "High-impact rapid session prioritizing memory decay and critical mistakes.",
+                    style = OS95Theme.typography.bodySmall,
+                    color = OS95Theme.colors.secondaryText
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+
+                rescuePlan?.blocks?.forEach { block ->
+                    OS95Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        backgroundColor = OS95Theme.colors.background
+                    ) {
+                        Column {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "${block.startMinute}:00–${block.endMinute}:00",
+                                    style = OS95Theme.typography.caption,
+                                    color = OS95Theme.colors.accentCyan
+                                )
+                                Text(
+                                    text = block.actionType.label,
+                                    style = OS95Theme.typography.caption,
+                                    color = OS95Theme.colors.mutedText
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = block.title,
+                                style = OS95Theme.typography.sectionTitle,
+                                color = OS95Theme.colors.primaryText
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = block.description,
+                                style = OS95Theme.typography.caption,
+                                color = OS95Theme.colors.secondaryText
                             )
                         }
                     }

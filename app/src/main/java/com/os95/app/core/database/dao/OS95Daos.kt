@@ -58,6 +58,12 @@ interface SyllabusDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSubject(subject: SubjectEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSubjects(subjects: List<SubjectEntity>)
+
+    @Query("SELECT * FROM subjects WHERE LOWER(name) = LOWER(:name) LIMIT 1")
+    suspend fun getSubjectByName(name: String): SubjectEntity?
+
     @Delete
     suspend fun deleteSubject(subject: SubjectEntity)
 
@@ -65,11 +71,20 @@ interface SyllabusDao {
     @Query("SELECT * FROM chapters WHERE subjectId = :subjectId ORDER BY orderIndex ASC, name ASC")
     fun getChaptersForSubject(subjectId: String): Flow<List<ChapterEntity>>
 
+    @Query("SELECT * FROM chapters WHERE subjectId = :subjectId ORDER BY orderIndex ASC, name ASC")
+    suspend fun getChaptersForSubjectSync(subjectId: String): List<ChapterEntity>
+
     @Query("SELECT * FROM chapters WHERE id = :id LIMIT 1")
     suspend fun getChapterById(id: String): ChapterEntity?
 
+    @Query("SELECT * FROM chapters WHERE subjectId = :subjectId AND LOWER(name) = LOWER(:name) LIMIT 1")
+    suspend fun getChapterByName(subjectId: String, name: String): ChapterEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertChapter(chapter: ChapterEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertChapters(chapters: List<ChapterEntity>)
 
     @Delete
     suspend fun deleteChapter(chapter: ChapterEntity)
@@ -78,17 +93,32 @@ interface SyllabusDao {
     @Query("SELECT * FROM topics WHERE chapterId = :chapterId ORDER BY orderIndex ASC, name ASC")
     fun getTopicsForChapter(chapterId: String): Flow<List<TopicEntity>>
 
+    @Query("SELECT * FROM topics WHERE chapterId = :chapterId ORDER BY orderIndex ASC, name ASC")
+    suspend fun getTopicsForChapterSync(chapterId: String): List<TopicEntity>
+
     @Query("SELECT * FROM topics ORDER BY name ASC")
     fun getAllTopics(): Flow<List<TopicEntity>>
+
+    @Query("SELECT * FROM topics ORDER BY name ASC")
+    suspend fun getAllTopicsSync(): List<TopicEntity>
 
     @Query("SELECT * FROM topics WHERE id = :id LIMIT 1")
     suspend fun getTopicById(id: String): TopicEntity?
 
+    @Query("SELECT * FROM topics WHERE chapterId = :chapterId AND LOWER(name) = LOWER(:name) LIMIT 1")
+    suspend fun getTopicByName(chapterId: String, name: String): TopicEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTopic(topic: TopicEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertTopics(topics: List<TopicEntity>)
+
     @Update
     suspend fun updateTopic(topic: TopicEntity)
+
+    @Query("UPDATE topics SET weaknessScore = :weaknessScore WHERE id = :topicId")
+    suspend fun updateTopicWeakness(topicId: String, weaknessScore: Float)
 
     @Delete
     suspend fun deleteTopic(topic: TopicEntity)
@@ -106,17 +136,32 @@ interface PaperPilotDao {
     @Query("SELECT * FROM question_bank WHERE subjectId = :subjectId")
     fun getQuestionsForSubject(subjectId: String): Flow<List<QuestionBankEntity>>
 
+    @Query("SELECT * FROM question_bank WHERE subjectId = :subjectId")
+    suspend fun getQuestionsForSubjectSync(subjectId: String): List<QuestionBankEntity>
+
     @Query("SELECT * FROM question_bank WHERE chapterId = :chapterId")
     fun getQuestionsForChapter(chapterId: String): Flow<List<QuestionBankEntity>>
 
     @Query("SELECT * FROM question_bank")
     fun getAllQuestions(): Flow<List<QuestionBankEntity>>
 
+    @Query("SELECT * FROM question_bank")
+    suspend fun getAllQuestionsSync(): List<QuestionBankEntity>
+
+    @Query("SELECT * FROM question_bank WHERE id = :id LIMIT 1")
+    suspend fun getQuestionById(id: String): QuestionBankEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertQuestion(question: QuestionBankEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertQuestions(questions: List<QuestionBankEntity>)
+
     @Update
     suspend fun updateQuestion(question: QuestionBankEntity)
+
+    @Query("UPDATE question_bank SET timesTested = timesTested + :testedInc, timesFailed = timesFailed + :failedInc, lastUsedAt = :lastUsedAt WHERE id = :questionId")
+    suspend fun recordQuestionUsage(questionId: String, testedInc: Int, failedInc: Int, lastUsedAt: Long)
 
     @Delete
     suspend fun deleteQuestion(question: QuestionBankEntity)
@@ -131,14 +176,30 @@ interface PaperPilotDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPaper(paper: PaperEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertPapers(papers: List<PaperEntity>)
+
     @Update
     suspend fun updatePaper(paper: PaperEntity)
 
     @Delete
     suspend fun deletePaper(paper: PaperEntity)
 
+    // Paper Questions
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPaperQuestion(join: PaperQuestionEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertPaperQuestions(joins: List<PaperQuestionEntity>)
+
+    @Query("DELETE FROM paper_questions WHERE paperId = :paperId")
+    suspend fun deletePaperQuestions(paperId: String)
+
+    @Query("SELECT * FROM paper_questions WHERE paperId = :paperId ORDER BY orderIndex ASC")
+    fun getPaperQuestions(paperId: String): Flow<List<PaperQuestionEntity>>
+
+    @Query("SELECT * FROM paper_questions WHERE paperId = :paperId ORDER BY orderIndex ASC")
+    suspend fun getPaperQuestionsSync(paperId: String): List<PaperQuestionEntity>
 
     @Query("SELECT q.* FROM question_bank q INNER JOIN paper_questions pq ON q.id = pq.questionId WHERE pq.paperId = :paperId ORDER BY pq.orderIndex ASC")
     fun getQuestionsForPaper(paperId: String): Flow<List<QuestionBankEntity>>
@@ -147,11 +208,20 @@ interface PaperPilotDao {
     @Query("SELECT * FROM exam_results ORDER BY completedAt DESC")
     fun getAllResults(): Flow<List<ExamResultEntity>>
 
+    @Query("SELECT * FROM exam_results ORDER BY completedAt DESC")
+    suspend fun getAllResultsSync(): List<ExamResultEntity>
+
+    @Query("SELECT * FROM papers ORDER BY createdAt DESC")
+    suspend fun getAllPapersSync(): List<PaperEntity>
+
     @Query("SELECT * FROM exam_results WHERE paperId = :paperId LIMIT 1")
     suspend fun getResultForPaper(paperId: String): ExamResultEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertResult(result: ExamResultEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertResults(results: List<ExamResultEntity>)
 
     // Lost Marks
     @Query("SELECT * FROM lost_marks WHERE examResultId = :resultId")
@@ -160,8 +230,14 @@ interface PaperPilotDao {
     @Query("SELECT * FROM lost_marks")
     fun getAllLostMarks(): Flow<List<LostMarksEntity>>
 
+    @Query("SELECT * FROM lost_marks")
+    suspend fun getAllLostMarksSync(): List<LostMarksEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertLostMarks(lostMarks: LostMarksEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertMultipleLostMarks(lostMarksList: List<LostMarksEntity>)
 }
 
 @Dao
@@ -172,11 +248,17 @@ interface MistakeDao {
     @Query("SELECT * FROM mistakes ORDER BY createdAt DESC")
     fun getAllMistakes(): Flow<List<MistakeEntity>>
 
+    @Query("SELECT * FROM mistakes ORDER BY createdAt DESC")
+    suspend fun getAllMistakesSync(): List<MistakeEntity>
+
     @Query("SELECT * FROM mistakes WHERE subjectId = :subjectId")
     fun getMistakesBySubject(subjectId: String): Flow<List<MistakeEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMistake(mistake: MistakeEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertMistakes(mistakes: List<MistakeEntity>)
 
     @Update
     suspend fun updateMistake(mistake: MistakeEntity)
@@ -192,6 +274,9 @@ interface RecallDao {
 
     @Query("SELECT * FROM recall_cards ORDER BY createdAt DESC")
     fun getAllCards(): Flow<List<RecallCardEntity>>
+
+    @Query("SELECT * FROM recall_cards ORDER BY createdAt DESC")
+    suspend fun getAllCardsSync(): List<RecallCardEntity>
 
     @Query("SELECT * FROM recall_cards WHERE subjectId = :subjectId")
     fun getCardsBySubject(subjectId: String): Flow<List<RecallCardEntity>>
@@ -210,6 +295,9 @@ interface RecallDao {
 
     @Query("SELECT * FROM recall_reviews ORDER BY reviewTimestamp DESC LIMIT 50")
     fun getRecentReviews(): Flow<List<RecallReviewEntity>>
+
+    @Query("SELECT * FROM recall_reviews ORDER BY reviewTimestamp DESC")
+    suspend fun getAllReviewsSync(): List<RecallReviewEntity>
 }
 
 @Dao

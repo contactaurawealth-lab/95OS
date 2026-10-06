@@ -102,3 +102,148 @@ Subject (1) ───< Chapter (N) ───< Topic (N)
 
 ## 4. Centralized, Versioned, Shareable (CVS) Foundation
 Features such as Marks Gap Planner, Forgetting Radar, and Previous Paper Analyzer are designed as CVS-compatible modules. Their computation operates directly over the shared relational entities rather than screen-isolated silos, ensuring total data interoperability and universal CSV portability.
+
+---
+
+## 5. Universal CSV Engine Architecture
+
+The Universal CSV Engine is a shared offline system infrastructure supporting 10 distinct academic datasets:
+
+```
+CSV Engine
+├── CsvParser (RFC 4180 compliant: quotes, commas, escapes "", multiline, Unicode)
+├── CsvValidator (Required columns, types, enums, positive marks)
+├── CsvExporter (RFC 4180 serialization, downloadable templates)
+├── Duplicate Detector (Exact ID duplicate, Normalized content duplicate)
+├── Relationship Resolver (Hierarchy validation: CREATE_MISSING, FAIL_ON_MISSING, SKIP_ROW)
+├── Import Preview (Non-destructive validation breakdown before any DB mutation)
+├── Import Executor (Atomic Room transaction with complete rollback on unexpected failure)
+└── Error Reporter (Row-level and column-level actionable feedback)
+```
+
+### Supported Datasets:
+1. `QUESTIONS` — Question pool with type, difficulty, marks, answer, source.
+2. `SUBJECTS` — Top-level academic subjects.
+3. `CHAPTERS` — Units within a subject.
+4. `TOPICS` — Granular concepts with mastery and relevance.
+5. `SYLLABUS` — Combined multi-level hierarchy.
+6. `RECALL_CARDS` — Active spaced repetition flashcards.
+7. `PAPERS` — Examination paper definitions.
+8. `RESULTS` — Historical exam attempts and diagnostic scores.
+9. `MISTAKES` — Catalog of lost marks and resolved status.
+10. `STUDY_SESSIONS` — Timed study and focus logs.
+
+---
+
+## 6. PaperPilot Generation & Snapshot Architecture
+
+### 6.1 Constraint Satisfaction Solver
+Exam paper generation satisfies strict mathematical constraints without floating-point precision drift:
+- Marks are scaled by 10 to perform exact integer subset-sum branch-and-bound backtracking, guaranteeing `sum(q.marks) == targetMarks`.
+- When an exact solution cannot be formed from the pool, an explainable failure result is returned with concrete recovery options (relax difficulty, add chapters, add question types, reduce marks, or import more questions).
+- Question selection prioritizes weak topics (weakness score adds up to +80 score boost) and respects repetition policies (`STRICTLY_NEW`, `AVOID_RECENT`, `ALLOW_REPETITION`).
+- Selected questions are partitioned into authentic academic sections: Section A (MCQ / Objective, 1 mark), Section B (Short Answer, 2-3 marks), Section C (Long Answer, 4-5 marks), and Section D (Advanced / Numerical, 6+ marks).
+
+### 6.2 Paper Snapshot Immutability Invariant
+Once a paper is generated and finalized, it becomes **strictly immutable**:
+- `PaperQuestionEntity` contains snapshot columns (`snapshotQuestionText`, `snapshotMarks`, `snapshotQuestionType`, `snapshotDifficulty`, `snapshotAnswer`, `snapshotChapterId`, `snapshotTopicId`).
+- `questionId` references `question_bank` with `onDelete = ForeignKey.SET_NULL`.
+- If an author or student later edits or deletes questions from the Question Bank, all finalized and historical papers remain 100% intact, readable, and printable.
+
+---
+
+## 7. Closed-Loop Offline Pipeline Architecture
+
+95OS connects every academic touchpoint into a deterministic closed loop:
+```
+CSV Import
+    ↓
+Academic Data (Subjects, Chapters, Topics)
+    ↓
+Question Bank (Pool with marks, types, difficulty)
+    ↓
+Syllabus Mapping (Linked to curriculum units)
+    ↓
+Paper Builder (Target marks, duration, chapters, difficulty)
+    ↓
+Question Selection Engine (Knapsack solver + weakness prioritization)
+    ↓
+Exam Paper (Sections A–D, structured layout)
+    ↓
+Printable / PDF (A4 format with candidate metadata & instructions)
+    ↓
+Physical Exam (Distraction-free fullscreen timer & exit warning)
+    ↓
+Result Entry (Question-level marks obtained & loss categorization)
+    ↓
+Performance Data (Overall percentage & marks trend)
+    ↓
+Mistakes / Weak Topics (Mistake Bank entries + Topic weakness score updated)
+    ↓
+Future Paper Generation (Adaptive weighting surfaces previous weak areas)
+```
+All components operate 100% offline under Room SQLite with zero network calls and zero external telemetry.
+
+---
+
+## 8. Marks Recovery Engine Architecture
+
+The Marks Recovery Engine is a unified, deterministic domain layer (`MarksRecoveryEngine.kt`) serving five interconnected recovery features from a single source of truth:
+
+```
+                      Marks Recovery Engine
+                                │
+        ┌───────────────┬───────┴───────┬───────────────┐
+        ▼               ▼               ▼               ▼
+   Marks Gap     Forgetting Radar  Paper Analyzer  Recovery Score
+    Planner             │               │               │
+        │               └───────┬───────┘               │
+        ▼                       ▼                       ▼
+Top Opportunities       15-Minute Rescue          Regained Marks
+  Prioritization              Mode                  Report
+```
+
+### 8.1 Marks Gap Planner
+- **Objective:** Compute exact percentage and mark distance from target (default 95.0%) and project recoverable marks from active mistakes.
+- **Formulas:**
+  $$\text{Percentage Gap} = \max(0, \text{Target \%} - \text{Current \%})$$
+  $$\text{Marks Needed} = \max(0, \text{Total Marks} \times \frac{\text{Target \%} - \text{Current \%}}{100})$$
+  $$\text{Potential Recoverable Marks} = \sum_{m \in \text{Unresolved Mistakes}} m.\text{marksLost}$$
+- **Prioritization Formula:**
+  $$\text{Priority Score} = M_{\text{lost}} \times F_{\text{recent}} \times W \times R \times E$$
+  - $M_{\text{lost}}$: Total marks lost on topic.
+  - $F_{\text{recent}}$: Recent frequency factor ($1.0 + 0.2 \times \min(N_{\text{mistakes}}, 5)$).
+  - $W$: Topic weakness score ($\max(0.2, \text{weaknessScore})$).
+  - $R$: Recoverability factor by dominant loss category (Calculation Error / Careless: 1.0; Forgotten / Didn't Know: 0.9; Time Management: 0.8; Concept Error: 0.7).
+  - $E$: Exam relevance weighting ($\text{HIGH} = 1.5, \text{MEDIUM} = 1.0, \text{LOW} = 0.7$).
+- **Priority Thresholds:** Score $\ge 10.0 \to \text{VERY\_HIGH}$; $\ge 5.0 \to \text{HIGH}$; $\ge 2.0 \to \text{MEDIUM}$; $< 2.0 \to \text{LOW}$.
+
+### 8.2 Forgetting Radar (SM-2 Retention Decay Risk)
+Evaluates SM-2 card intervals, review history, and overdue delta ($\Delta_{\text{days}} = \frac{\text{now} - \text{dueDate}}{86400000}$):
+- `CRITICAL`: $\Delta_{\text{days}} > 3.0$ days overdue, or new card overdue ($\text{repetitions} = 0 \land \Delta_{\text{days}} > 0$), or ease factor $< 1.6$.
+- `AT_RISK`: $\Delta_{\text{days}} \in [1.0, 3.0]$ days overdue, or interval $\le 3$ days, or topic weakness $\ge 0.7$.
+- `WATCH`: Due in $0..3$ days ($\Delta_{\text{days}} \in [-3.0, 0]$), or ease factor $< 2.0$, or topic in `LEARNING` / `NOT_STARTED`.
+- `STABLE`: Due $> 3$ days in the future with healthy ease factor $\ge 2.3$ and `MASTERED` mastery state.
+
+### 8.3 Previous Paper Analyzer
+Extracts longitudinal performance across PaperPilot and manual papers:
+- **Trend Detection:** With $\le 3$ papers, trend delta is $\text{Score}_{\text{last}} - \text{Score}_{\text{first}}$. With $\ge 4$ papers, trend delta is $\text{Average}_{\text{recent 3}} - \text{Average}_{\text{overall}}$.
+  - $\Delta \ge +2.0\% \to \text{IMPROVING}$; $\Delta \le -2.0\% \to \text{DECLINING}$; otherwise $\to \text{STABLE}$.
+- **Repeated Weakness Invariant:** Explicitly isolates topics where marks were lost across $\ge 2$ distinct examination papers, surfacing entrenched conceptual or careless errors.
+- **Diagnostics:** Per-chapter accuracy and question-type success rates mapped against exam paper question snapshots.
+
+### 8.4 15-Minute Rescue Mode
+Generates rapid, time-budgeted study blocks:
+- **Block 1 (Recall):** 40% of duration ($\ge 2$ mins) targeting highest-risk cards from Forgetting Radar.
+- **Block 2 (Mistakes):** 35% of duration ($\ge 2$ mins) eliminating repeated calculation/careless mistakes.
+- **Block 3 (High-Yield Concept):** 25% of duration ($\ge 1$ min) reviewing key formulas/concepts from top Marks Gap opportunity.
+- Variable time settings supported: 5m, 10m, 15m, 20m, 30m. Sum of block durations strictly equals total duration.
+
+### 8.5 Recovery Score & Assessment Comparability
+Measures marks regained from previous exam weaknesses:
+- **Normalization Formula (Different Total Marks):**
+  $$\text{Normalized Previous Lost} = \left(\frac{\text{Previous Lost Marks}}{\text{Previous Total Marks}}\right) \times \text{Current Total Marks}$$
+  $$\text{Recovered Marks} = \text{Normalized Previous Lost} - \text{Current Lost Marks}$$
+- Breaks down recovered marks by mistake category and per-topic delta ($\text{Previous Lost on Topic} - \text{Current Lost on Topic}$).
+
+

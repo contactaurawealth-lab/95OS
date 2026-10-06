@@ -7,16 +7,20 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Psychology
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -37,8 +41,9 @@ import com.os95.app.domain.model.RecallRating
 @Composable
 fun RecallScreen(
     viewModel: RecallViewModel,
+    modifier: Modifier = Modifier,
     onNavigateBack: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
+    onNavigateToForgettingRadar: (() -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val colors = OS95Theme.colors
@@ -104,6 +109,51 @@ fun RecallScreen(
                 }
             }
 
+            if (onNavigateToForgettingRadar != null) {
+                Spacer(modifier = Modifier.height(spacing.m))
+                OS95Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onNavigateToForgettingRadar() },
+                    backgroundColor = colors.surface
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Outlined.Psychology,
+                                contentDescription = null,
+                                tint = colors.accentCyan,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = "Forgetting Radar",
+                                    style = typography.bodySmall,
+                                    color = colors.primaryText
+                                )
+                                Text(
+                                    text = "Monitor SM-2 memory decay & retention risk",
+                                    style = typography.caption,
+                                    color = colors.mutedText
+                                )
+                            }
+                        }
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Outlined.ArrowForward,
+                            contentDescription = null,
+                            tint = colors.mutedText,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(spacing.m))
+            }
+
             // Session Presets Selector
             Text(
                 text = "Session Presets",
@@ -120,6 +170,7 @@ fun RecallScreen(
                     Box(
                         modifier = Modifier
                             .weight(1f)
+                            .defaultMinSize(minHeight = 44.dp)
                             .clip(shapes.pill)
                             .background(if (isSelected) colors.accent else colors.cardBackground)
                             .clickable { viewModel.selectPreset(preset) }

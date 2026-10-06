@@ -1,25 +1,35 @@
 # Now
-- [ ] Phase 2: PaperPilot paper blueprint builder and exam generation engine
-- [ ] Phase 2: Offline Printable PDF exam paper generator
-- [ ] Phase 2: Real Exam Mode foreground timer service & distraction block coordinator
+- [ ] Phase 3: Time-to-Marks Intelligence & Efficiency Metrics
+- [ ] Phase 3: Adaptive Re-Test & Mistake Paper Generator
 
 # Next
-- [ ] Phase 2: Result recording & diagnostic flow with question-level loss categorization
-- [ ] Phase 2: Universal CSV multi-entity bulk import/export execution
+- [ ] Phase 3: Exam Readiness Simulator
+- [ ] Phase 3: Last-7-Days Mode & 95% Command Center
 
 # Later
-- [ ] Phase 3: Marks Gap Planner (CVS-Compatible)
-- [ ] Phase 3: Forgetting Radar (CVS-Compatible)
-- [ ] Phase 3: Previous Paper Analyzer (CVS-Compatible)
-- [ ] Phase 3: 15-Minute Rescue Mode
-- [ ] Phase 3: Recovery Score & Time-to-Marks Intelligence
-- [ ] Phase 3: Adaptive Re-Test & Exam Readiness Simulator
+- [ ] Phase 3: Time-to-Marks Intelligence & Efficiency Metrics
+- [ ] Phase 3: Adaptive Re-Test & Mistake Paper Generator
+- [ ] Phase 3: Exam Readiness Simulator
 - [ ] Phase 3: Last-7-Days Mode & 95% Command Center
 
 # Bugs
 - [ ] (No open bugs)
 
 # Completed
+- [x] Phase 3: Marks Gap Planner (CVS-Compatible) — Deterministic percentage & marks gap from 95% target, recoverable marks from active mistakes, and prioritization ranking ($M_{\text{lost}} \times F_{\text{recent}} \times W \times R \times E$)
+- [x] Phase 3: Forgetting Radar (CVS-Compatible) — SM-2 spaced repetition decay risk classifier (`CRITICAL`, `AT_RISK`, `WATCH`, `STABLE`) with one-tap jump to Recall sessions
+- [x] Phase 3: Previous Paper Analyzer (CVS-Compatible) — Historical exam performance trends (`IMPROVING`, `DECLINING`, `STABLE`), per-chapter accuracy, question-type breakdown, and repeated weakness detection across $\ge 2$ distinct papers
+- [x] Phase 3: 15-Minute Rescue Mode — Time-budgeted rapid intervention sessions (5, 10, 15, 20, 30m) balancing High-Risk Recall (40%), Mistake Remediation (35%), and High-Yield Concept Review (25%)
+- [x] Phase 3: Recovery Score — Quantifies marks regained on re-tests ($\text{Previous Lost} - \text{Current Lost}$) with assessment comparability normalization for exams of differing lengths, category breakdown, and topic recovery list
+- [x] Phase 3: Full closed-loop navigation wiring across Home, Recall, Papers, Mistakes, and Progress tabs in `OS95NavHost`
+- [x] Phase 3: Unit & integration test suite (62/62 passing) covering all 5 recovery features and complete 10-phase end-to-end integration scenario
+- [x] Phase 2: Universal CSV multi-entity bulk import/export engine across all 10 datasets with RFC 4180 parsing, row-level validation, duplicate detection, missing hierarchy handling, and atomic Room transactions
+- [x] Phase 2: PaperPilot blueprint builder and constraint-based paper generation engine (exact marks integer knapsack solver, adaptive weak topic prioritization, repetition filters, and section partitioning)
+- [x] Phase 2: Paper snapshot immutability guaranteeing finalized papers never mutate or break when questions in the bank are edited or deleted
+- [x] Phase 2: Offline printable exam paper text formatter & Android PdfDocument generator with instructions, candidate metadata, and right-aligned marks
+- [x] Phase 2: Real Exam Mode fullscreen timer with distraction block and exit confirmation dialog
+- [x] Phase 2: Question-level exam result entry dialog with loss categorization (Concept, Calculation, Misread, Careless, Time Shortage)
+- [x] Phase 2: Closed-loop pipeline linkage to Mistake Bank creation, topic weakness score boosting, and adaptive future paper generation
 - [x] Phase 2: Question Bank Engine & Management UI with subject/difficulty filters and search
 - [x] Phase 2: Active Recall session presets (Blitz 5, Focused 10, Deep 20, All Due) & Mistake Bank auto-linkage ("To Recall")
 - [x] Codebase inspection & complete 95OS architecture mapping

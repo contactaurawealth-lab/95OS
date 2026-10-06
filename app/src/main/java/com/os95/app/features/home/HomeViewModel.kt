@@ -24,6 +24,10 @@ data class HomeUiState(
     val subjects: List<SubjectEntity> = emptyList(),
     val dueRecallCards: List<RecallCardEntity> = emptyList(),
     val recentPapers: List<PaperEntity> = emptyList(),
+    val potentialRecoverableMarks: Float = 0f,
+    val criticalTopicsCount: Int = 0,
+    val rescuePlan: com.os95.app.domain.model.RescuePlan? = null,
+    val feedbackMessage: String? = null,
     val isLoading: Boolean = true
 )
 
@@ -31,7 +35,8 @@ class HomeViewModel(
     private val studentRepository: StudentRepository,
     private val syllabusRepository: SyllabusRepository,
     private val recallRepository: RecallRepository,
-    private val paperRepository: PaperRepository
+    private val paperRepository: PaperRepository,
+    private val marksRecoveryRepository: com.os95.app.domain.repository.MarksRecoveryRepository? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -91,5 +96,36 @@ class HomeViewModel(
                 _uiState.value = state
             }
         }
+
+        if (marksRecoveryRepository != null) {
+            viewModelScope.launch {
+                marksRecoveryRepository.getRecoverySnapshotFlow().collect { snapshot ->
+                    _uiState.value = _uiState.value.copy(
+                        potentialRecoverableMarks = snapshot.marksGap.potentialRecoverableMarks,
+                        criticalTopicsCount = snapshot.forgettingRadar.criticalCount + snapshot.forgettingRadar.atRiskCount,
+                        rescuePlan = snapshot.rescuePlan
+                    )
+                }
+            }
+        }
+    }
+
+    fun completeRescueSession(durationMinutes: Int) {
+        viewModelScope.launch {
+            marksRecoveryRepository?.completeRescueSession(
+                durationMinutes = durationMinutes,
+                actionsCompleted = _uiState.value.rescuePlan?.blocks?.size ?: 3,
+                topicsCovered = 2,
+                cardsReviewed = 5,
+                mistakesResolved = 2
+            )
+            _uiState.value = _uiState.value.copy(
+                feedbackMessage = "Completed $durationMinutes-min Rescue Session! Recorded to study history."
+            )
+        }
+    }
+
+    fun clearFeedback() {
+        _uiState.value = _uiState.value.copy(feedbackMessage = null)
     }
 }

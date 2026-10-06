@@ -5,6 +5,7 @@ import com.os95.app.core.database.entity.ExamResultEntity
 import com.os95.app.core.database.entity.LostMarksEntity
 import com.os95.app.core.database.entity.MistakeEntity
 import com.os95.app.core.database.entity.PaperEntity
+import com.os95.app.core.database.entity.PaperQuestionEntity
 import com.os95.app.core.database.entity.QuestionBankEntity
 import com.os95.app.core.database.entity.RecallCardEntity
 import com.os95.app.core.database.entity.RecallReviewEntity
@@ -55,9 +56,19 @@ interface PaperRepository {
     suspend fun updateQuestion(question: QuestionBankEntity)
     suspend fun deleteQuestion(question: QuestionBankEntity)
     fun getQuestionsForPaper(paperId: String): Flow<List<QuestionBankEntity>>
+    fun getPaperQuestions(paperId: String): Flow<List<PaperQuestionEntity>>
     suspend fun generatePaperBlueprint(subjectId: String, title: String, targetMarks: Float, durationMinutes: Int): PaperEntity
+    suspend fun generatePaper(blueprint: com.os95.app.domain.model.PaperBlueprintRequest): com.os95.app.domain.model.PaperGenerationResult
+    suspend fun finalizeAndSavePaper(generatedPaper: com.os95.app.domain.model.GeneratedPaper): PaperEntity
     fun getAllResults(): Flow<List<ExamResultEntity>>
     suspend fun recordResult(paperId: String, marksObtained: Float, totalMarks: Float, timeTakenMinutes: Int, lostMarks: List<LostMarksEntity>)
+    suspend fun recordDetailedResult(
+        paperId: String,
+        marksObtained: Float,
+        totalMarks: Float,
+        timeTakenMinutes: Int,
+        questionResults: List<com.os95.app.domain.model.QuestionResultInput>
+    ): ExamResultEntity
 }
 
 interface MistakeRepository {
@@ -79,3 +90,14 @@ interface StudentRepository {
     fun getAllSessions(): Flow<List<StudySessionEntity>>
     suspend fun logSession(subjectId: String, chapterId: String?, durationMinutes: Int)
 }
+
+interface MarksRecoveryRepository {
+    fun getRecoverySnapshotFlow(durationMinutes: Int = 15): Flow<com.os95.app.domain.model.MarksRecoverySnapshot>
+    suspend fun getMarksGapPlan(): com.os95.app.domain.model.MarksGapPlan
+    suspend fun getForgettingRadar(): com.os95.app.domain.model.ForgettingRadarSnapshot
+    suspend fun getPaperAnalysis(): com.os95.app.domain.model.PaperAnalysis
+    suspend fun getRescuePlan(durationMinutes: Int = 15): com.os95.app.domain.model.RescuePlan
+    suspend fun completeRescueSession(durationMinutes: Int, actionsCompleted: Int, topicsCovered: Int, cardsReviewed: Int, mistakesResolved: Int)
+    suspend fun getRecoveryScore(): com.os95.app.domain.model.RecoveryScoreReport
+}
+

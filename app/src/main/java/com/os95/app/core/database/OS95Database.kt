@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.withTransaction
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.os95.app.core.database.dao.MistakeDao
 import com.os95.app.core.database.dao.PaperPilotDao
@@ -27,6 +28,17 @@ import com.os95.app.core.database.entity.StudySessionEntity
 import com.os95.app.core.database.entity.SubjectEntity
 import com.os95.app.core.database.entity.TopicEntity
 
+interface DatabaseProvider {
+    fun studentDao(): StudentDao
+    fun studyPreferencesDao(): StudyPreferencesDao
+    fun syllabusDao(): SyllabusDao
+    fun paperPilotDao(): PaperPilotDao
+    fun mistakeDao(): MistakeDao
+    fun recallDao(): RecallDao
+    fun studySessionDao(): StudySessionDao
+    suspend fun <R> runInTransaction(block: suspend () -> R): R
+}
+
 @Database(
     entities = [
         StudentProfileEntity::class,
@@ -44,17 +56,19 @@ import com.os95.app.core.database.entity.TopicEntity
         RecallReviewEntity::class,
         StudySessionEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
-abstract class OS95Database : RoomDatabase() {
-    abstract fun studentDao(): StudentDao
-    abstract fun studyPreferencesDao(): StudyPreferencesDao
-    abstract fun syllabusDao(): SyllabusDao
-    abstract fun paperPilotDao(): PaperPilotDao
-    abstract fun mistakeDao(): MistakeDao
-    abstract fun recallDao(): RecallDao
-    abstract fun studySessionDao(): StudySessionDao
+abstract class OS95Database : RoomDatabase(), DatabaseProvider {
+    abstract override fun studentDao(): StudentDao
+    abstract override fun studyPreferencesDao(): StudyPreferencesDao
+    abstract override fun syllabusDao(): SyllabusDao
+    abstract override fun paperPilotDao(): PaperPilotDao
+    abstract override fun mistakeDao(): MistakeDao
+    abstract override fun recallDao(): RecallDao
+    abstract override fun studySessionDao(): StudySessionDao
+
+    override suspend fun <R> runInTransaction(block: suspend () -> R): R = withTransaction(block)
 
     companion object {
         @Volatile

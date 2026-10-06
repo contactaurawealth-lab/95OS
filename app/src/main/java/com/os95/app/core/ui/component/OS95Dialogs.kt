@@ -22,12 +22,13 @@ import com.os95.app.core.ui.theme.OS95Theme
 @Composable
 fun OS95Dialog(
     title: String,
-    message: String,
     confirmButtonText: String,
     onConfirm: () -> Unit,
     onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier,
+    message: String = "",
     dismissButtonText: String? = "Cancel",
-    modifier: Modifier = Modifier
+    content: (@Composable () -> Unit)? = null
 ) {
     val colors = OS95Theme.colors
     val typography = OS95Theme.typography
@@ -49,12 +50,18 @@ fun OS95Dialog(
                     style = typography.sectionTitle,
                     color = colors.primaryText
                 )
-                Spacer(modifier = Modifier.height(spacing.s))
-                Text(
-                    text = message,
-                    style = typography.bodySmall,
-                    color = colors.secondaryText
-                )
+                if (message.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(spacing.s))
+                    Text(
+                        text = message,
+                        style = typography.bodySmall,
+                        color = colors.secondaryText
+                    )
+                }
+                if (content != null) {
+                    Spacer(modifier = Modifier.height(spacing.m))
+                    content()
+                }
                 Spacer(modifier = Modifier.height(spacing.xl))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -75,4 +82,27 @@ fun OS95Dialog(
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun OS95Dialog(
+    title: String,
+    message: String,
+    confirmButtonText: String,
+    onConfirm: () -> Unit,
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier,
+    dismissButtonText: String? = "Cancel"
+) {
+    OS95Dialog(
+        title = title,
+        confirmButtonText = confirmButtonText,
+        onConfirm = onConfirm,
+        onDismissRequest = onDismissRequest,
+        modifier = modifier,
+        message = message,
+        dismissButtonText = dismissButtonText,
+        content = null
+    )
 }

@@ -43,8 +43,9 @@ import com.os95.app.core.ui.theme.OS95Theme
 @Composable
 fun MistakesScreen(
     viewModel: MistakesViewModel,
+    modifier: Modifier = Modifier,
     onNavigateBack: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
+    onNavigateToRecovery: (() -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val colors = OS95Theme.colors
@@ -115,11 +116,20 @@ fun MistakesScreen(
                                     color = colors.error
                                 )
                             }
-                            Text(
-                                text = "Recoverable via re-test",
-                                style = typography.caption,
-                                color = colors.secondaryText
-                            )
+                            Column(horizontalAlignment = Alignment.End) {
+                                if (onNavigateToRecovery != null) {
+                                    OS95OutlinedButton(
+                                        text = "Recovery Plan",
+                                        onClick = onNavigateToRecovery
+                                    )
+                                } else {
+                                    Text(
+                                        text = "Recoverable via re-test",
+                                        style = typography.caption,
+                                        color = colors.secondaryText
+                                    )
+                                }
+                            }
                         }
                     }
                     Spacer(modifier = Modifier.height(spacing.m))

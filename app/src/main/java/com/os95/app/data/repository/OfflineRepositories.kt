@@ -12,6 +12,7 @@ import com.os95.app.core.database.entity.ExamResultEntity
 import com.os95.app.core.database.entity.LostMarksEntity
 import com.os95.app.core.database.entity.MistakeEntity
 import com.os95.app.core.database.entity.PaperEntity
+import com.os95.app.core.database.entity.PaperQuestionEntity
 import com.os95.app.core.database.entity.QuestionBankEntity
 import com.os95.app.core.database.entity.RecallCardEntity
 import com.os95.app.core.database.entity.RecallReviewEntity
@@ -149,7 +150,10 @@ class OfflineRecallRepository(
 }
 
 class OfflinePaperRepository(
-    private val dao: PaperPilotDao
+    private val dao: PaperPilotDao,
+    private val syllabusDao: SyllabusDao? = null,
+    private val mistakeDao: MistakeDao? = null,
+    private val generationEngine: com.os95.app.domain.engine.PaperGenerationEngine = com.os95.app.domain.engine.PaperGenerationEngine()
 ) : PaperRepository {
 
     override fun getAllPapers(): Flow<List<PaperEntity>> = dao.getAllPapers()
@@ -208,6 +212,9 @@ class OfflinePaperRepository(
     override fun getQuestionsForPaper(paperId: String): Flow<List<QuestionBankEntity>> =
         dao.getQuestionsForPaper(paperId)
 
+    override fun getPaperQuestions(paperId: String): Flow<List<PaperQuestionEntity>> =
+        dao.getPaperQuestions(paperId)
+
     override suspend fun generatePaperBlueprint(
         subjectId: String,
         title: String,
@@ -234,7 +241,15 @@ class OfflinePaperRepository(
                         com.os95.app.core.database.entity.PaperQuestionEntity(
                             paperId = paper.id,
                             questionId = q.id,
-                            orderIndex = order++
+                            orderIndex = order++,
+                            sectionName = "Section A",
+                            snapshotQuestionText = q.questionText,
+                            snapshotMarks = q.marks,
+                            snapshotQuestionType = q.questionType,
+                            snapshotDifficulty = q.difficulty,
+                            snapshotAnswer = q.markingScheme,
+                            snapshotChapterId = q.chapterId,
+                            snapshotTopicId = q.topicId
                         )
                     )
                     currentTotal += q.marks
@@ -243,6 +258,51 @@ class OfflinePaperRepository(
             }
         }
         return paper
+    }
+
+    override suspend fun generatePaper(
+        blueprint: com.os95.app.domain.model.PaperBlueprintRequest
+    ): com.os95.app.domain.model.PaperGenerationResult {
+        return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            val questions = dao.getQuestionsForSubjectSync(blueprint.subjectId)
+            val chapters = syllabusDao?.getChaptersForSubjectSync(blueprint.subjectId) ?: emptyList()
+            val topics = syllabusDao?.getAllTopicsSync() ?: emptyList()
+            generationEngine.generatePaper(blueprint, questions, chapters, topics)
+        }
+    }
+
+    override suspend fun finalizeAndSavePaper(
+        generatedPaper: com.os95.app.domain.model.GeneratedPaper
+    ): PaperEntity {
+        return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            dao.insertPaper(generatedPaper.paper)
+            val joins = mutableListOf<PaperQuestionEntity>()
+            var order = 1
+            val now = System.currentTimeMillis()
+
+            for (sec in generatedPaper.sections) {
+                for (q in sec.questions) {
+                    joins.add(
+                        PaperQuestionEntity(
+                            paperId = generatedPaper.paper.id,
+                            questionId = q.id,
+                            orderIndex = order++,
+                            sectionName = sec.name,
+                            snapshotQuestionText = q.questionText,
+                            snapshotMarks = q.marks,
+                            snapshotQuestionType = q.questionType,
+                            snapshotDifficulty = q.difficulty,
+                            snapshotAnswer = q.markingScheme,
+                            snapshotChapterId = q.chapterId,
+                            snapshotTopicId = q.topicId
+                        )
+                    )
+                    dao.recordQuestionUsage(q.id, testedInc = 1, failedInc = 0, lastUsedAt = now)
+                }
+            }
+            dao.insertPaperQuestions(joins)
+            generatedPaper.paper
+        }
     }
 
     override fun getAllResults(): Flow<List<ExamResultEntity>> = dao.getAllResults()
@@ -262,6 +322,65 @@ class OfflinePaperRepository(
         )
         dao.insertResult(result)
         lostMarks.forEach { dao.insertLostMarks(it.copy(examResultId = result.id)) }
+    }
+
+    override suspend fun recordDetailedResult(
+        paperId: String,
+        marksObtained: Float,
+        totalMarks: Float,
+        timeTakenMinutes: Int,
+        questionResults: List<com.os95.app.domain.model.QuestionResultInput>
+    ): ExamResultEntity {
+        return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            val result = ExamResultEntity(
+                paperId = paperId,
+                marksObtained = marksObtained,
+                totalMarks = totalMarks,
+                timeTakenMinutes = timeTakenMinutes
+            )
+            dao.insertResult(result)
+
+            val paper = dao.getPaperById(paperId)
+            val subId = paper?.subjectId ?: ""
+            val now = System.currentTimeMillis()
+
+            for (qRes in questionResults) {
+                if (qRes.isMistake) {
+                    dao.insertLostMarks(
+                        LostMarksEntity(
+                            examResultId = result.id,
+                            topicId = qRes.topicId,
+                            marksLost = qRes.marksLost,
+                            lossCategory = qRes.lossCategory,
+                            notes = qRes.notes
+                        )
+                    )
+                    mistakeDao?.insertMistake(
+                        MistakeEntity(
+                            subjectId = subId,
+                            chapterId = qRes.chapterId,
+                            topicId = qRes.topicId,
+                            question = qRes.questionText,
+                            studentAnswer = "",
+                            correctAnswer = "Review question marking scheme",
+                            lossCategory = qRes.lossCategory,
+                            marksLost = qRes.marksLost
+                        )
+                    )
+                    if (qRes.topicId != null) {
+                        syllabusDao?.updateTopicWeakness(qRes.topicId, 0.85f)
+                    }
+                    if (qRes.questionId != null) {
+                        dao.recordQuestionUsage(qRes.questionId, testedInc = 1, failedInc = 1, lastUsedAt = now)
+                    }
+                } else {
+                    if (qRes.questionId != null) {
+                        dao.recordQuestionUsage(qRes.questionId, testedInc = 1, failedInc = 0, lastUsedAt = now)
+                    }
+                }
+            }
+            result
+        }
     }
 }
 
@@ -332,3 +451,184 @@ class OfflineStudentRepository(
         )
     }
 }
+
+class OfflineMarksRecoveryRepository(
+    private val engine: com.os95.app.domain.engine.MarksRecoveryEngine = com.os95.app.domain.engine.MarksRecoveryEngine(),
+    private val studentDao: StudentDao,
+    private val syllabusDao: SyllabusDao,
+    private val paperDao: PaperPilotDao,
+    private val mistakeDao: MistakeDao,
+    private val recallDao: RecallDao,
+    private val sessionDao: StudySessionDao
+) : com.os95.app.domain.repository.MarksRecoveryRepository {
+
+    override fun getRecoverySnapshotFlow(durationMinutes: Int): Flow<com.os95.app.domain.model.MarksRecoverySnapshot> {
+        return kotlinx.coroutines.flow.combine(
+            studentDao.getProfileFlow(),
+            syllabusDao.getAllSubjects(),
+            syllabusDao.getAllTopics(),
+            paperDao.getAllResults(),
+            paperDao.getAllPapers(),
+            paperDao.getAllLostMarks(),
+            mistakeDao.getAllMistakes(),
+            recallDao.getAllCards(),
+            recallDao.getRecentReviews()
+        ) { args: Array<Any?> ->
+            val profile = args[0] as? StudentProfileEntity
+            @Suppress("UNCHECKED_CAST") val subjects = args[1] as List<SubjectEntity>
+            @Suppress("UNCHECKED_CAST") val topics = args[2] as List<TopicEntity>
+            @Suppress("UNCHECKED_CAST") val results = args[3] as List<ExamResultEntity>
+            @Suppress("UNCHECKED_CAST") val papers = args[4] as List<PaperEntity>
+            @Suppress("UNCHECKED_CAST") val lostMarks = args[5] as List<LostMarksEntity>
+            @Suppress("UNCHECKED_CAST") val mistakes = args[6] as List<MistakeEntity>
+            @Suppress("UNCHECKED_CAST") val cards = args[7] as List<RecallCardEntity>
+            @Suppress("UNCHECKED_CAST") val reviews = args[8] as List<RecallReviewEntity>
+
+            val chapters = mutableListOf<ChapterEntity>()
+            for (sub in subjects) {
+                chapters.addAll(syllabusDao.getChaptersForSubjectSync(sub.id))
+            }
+
+            val targetPercentage = profile?.targetPercentage ?: 95.0f
+
+            val marksGap = engine.calculateMarksGap(
+                targetPercentage = targetPercentage,
+                examResults = results,
+                mistakes = mistakes,
+                topics = topics,
+                chapters = chapters,
+                subjects = subjects
+            )
+
+            val forgettingRadar = engine.calculateForgettingRadar(
+                cards = cards,
+                reviews = reviews,
+                topics = topics,
+                chapters = chapters,
+                subjects = subjects
+            )
+
+            val paperAnalysis = engine.analyzePreviousPapers(
+                papers = papers,
+                results = results,
+                paperQuestions = emptyList(),
+                lostMarks = lostMarks,
+                mistakes = mistakes,
+                topics = topics,
+                chapters = chapters,
+                subjects = subjects
+            )
+
+            val rescuePlan = engine.generateRescuePlan(
+                durationMinutes = durationMinutes,
+                marksGap = marksGap,
+                forgettingRadar = forgettingRadar,
+                mistakes = mistakes,
+                topics = topics
+            )
+
+            val recoveryScore = engine.calculateRecoveryScore(
+                papers = papers,
+                results = results,
+                lostMarks = lostMarks,
+                mistakes = mistakes,
+                topics = topics,
+                chapters = chapters,
+                subjects = subjects
+            )
+
+            com.os95.app.domain.model.MarksRecoverySnapshot(
+                marksGap = marksGap,
+                forgettingRadar = forgettingRadar,
+                paperAnalysis = paperAnalysis,
+                rescuePlan = rescuePlan,
+                recoveryScore = recoveryScore
+            )
+        }
+    }
+
+    override suspend fun getMarksGapPlan(): com.os95.app.domain.model.MarksGapPlan = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        val profile = studentDao.getProfile()
+        val subjects = syllabusDao.getAllSubjects().first()
+        val topics = syllabusDao.getAllTopicsSync()
+        val chapters = mutableListOf<ChapterEntity>()
+        for (sub in subjects) {
+            chapters.addAll(syllabusDao.getChaptersForSubjectSync(sub.id))
+        }
+        val results = paperDao.getAllResultsSync()
+        val mistakes = mistakeDao.getAllMistakesSync()
+        engine.calculateMarksGap(
+            targetPercentage = profile?.targetPercentage ?: 95.0f,
+            examResults = results,
+            mistakes = mistakes,
+            topics = topics,
+            chapters = chapters,
+            subjects = subjects
+        )
+    }
+
+    override suspend fun getForgettingRadar(): com.os95.app.domain.model.ForgettingRadarSnapshot = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        val subjects = syllabusDao.getAllSubjects().first()
+        val topics = syllabusDao.getAllTopicsSync()
+        val chapters = mutableListOf<ChapterEntity>()
+        for (sub in subjects) {
+            chapters.addAll(syllabusDao.getChaptersForSubjectSync(sub.id))
+        }
+        val cards = recallDao.getAllCardsSync()
+        val reviews = recallDao.getAllReviewsSync()
+        engine.calculateForgettingRadar(cards, reviews, topics, chapters, subjects)
+    }
+
+    override suspend fun getPaperAnalysis(): com.os95.app.domain.model.PaperAnalysis = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        val subjects = syllabusDao.getAllSubjects().first()
+        val topics = syllabusDao.getAllTopicsSync()
+        val chapters = mutableListOf<ChapterEntity>()
+        for (sub in subjects) {
+            chapters.addAll(syllabusDao.getChaptersForSubjectSync(sub.id))
+        }
+        val papers = paperDao.getAllPapersSync()
+        val results = paperDao.getAllResultsSync()
+        val lostMarks = paperDao.getAllLostMarksSync()
+        val mistakes = mistakeDao.getAllMistakesSync()
+        engine.analyzePreviousPapers(papers, results, emptyList(), lostMarks, mistakes, topics, chapters, subjects)
+    }
+
+    override suspend fun getRescuePlan(durationMinutes: Int): com.os95.app.domain.model.RescuePlan = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        val marksGap = getMarksGapPlan()
+        val radar = getForgettingRadar()
+        val mistakes = mistakeDao.getAllMistakesSync()
+        val topics = syllabusDao.getAllTopicsSync()
+        engine.generateRescuePlan(durationMinutes, marksGap, radar, mistakes, topics)
+    }
+
+    override suspend fun completeRescueSession(
+        durationMinutes: Int,
+        actionsCompleted: Int,
+        topicsCovered: Int,
+        cardsReviewed: Int,
+        mistakesResolved: Int
+    ) = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        sessionDao.insertSession(
+            StudySessionEntity(
+                subjectId = "rescue_mode",
+                chapterId = null,
+                durationMinutes = durationMinutes
+            )
+        )
+    }
+
+    override suspend fun getRecoveryScore(): com.os95.app.domain.model.RecoveryScoreReport = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        val subjects = syllabusDao.getAllSubjects().first()
+        val topics = syllabusDao.getAllTopicsSync()
+        val chapters = mutableListOf<ChapterEntity>()
+        for (sub in subjects) {
+            chapters.addAll(syllabusDao.getChaptersForSubjectSync(sub.id))
+        }
+        val papers = paperDao.getAllPapersSync()
+        val results = paperDao.getAllResultsSync()
+        val lostMarks = paperDao.getAllLostMarksSync()
+        val mistakes = mistakeDao.getAllMistakesSync()
+        engine.calculateRecoveryScore(papers, results, lostMarks, mistakes, topics, chapters, subjects)
+    }
+}
+

@@ -29,7 +29,8 @@ import com.os95.app.core.ui.theme.ThemeMode
 fun SettingsScreen(
     viewModel: SettingsViewModel,
     onNavigateBack: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onNavigateToUniversalCsv: (() -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val colors = OS95Theme.colors
@@ -143,17 +144,24 @@ fun SettingsScreen(
                 )
                 Spacer(modifier = Modifier.height(spacing.s))
                 OS95Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Text(
-                            text = "Universal CSV Foundation Ready",
+                            text = "Universal CSV Engine",
                             style = typography.sectionTitle,
                             color = colors.primaryText
                         )
                         Text(
-                            text = "All your academic data (Syllabus, Question Bank, Recall Cards, Mistakes) is held locally in Room SQLite with zero external dependencies.",
+                            text = "Import or export Questions, Syllabus, Recall Cards, Mistakes, and Exam Results. 100% offline with zero cloud dependencies.",
                             style = typography.bodySmall,
                             color = colors.secondaryText
                         )
+                        if (onNavigateToUniversalCsv != null) {
+                            OS95Button(
+                                text = "Open Universal CSV Engine",
+                                onClick = onNavigateToUniversalCsv,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
                     }
                 }
             }

@@ -27,6 +27,7 @@ fun OS95TextField(
     isError: Boolean = false,
     errorMessage: String? = null,
     singleLine: Boolean = true,
+    readOnly: Boolean = false,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default
 ) {
@@ -39,6 +40,7 @@ fun OS95TextField(
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
+            readOnly = readOnly,
             modifier = Modifier.fillMaxWidth(),
             label = { Text(text = label, style = typography.bodySmall) },
             placeholder = if (placeholder != null) {

@@ -116,6 +116,8 @@ data class QuestionBankEntity(
     val difficulty: String = "MEDIUM",
     val timesTested: Int = 0,
     val timesFailed: Int = 0,
+    val source: String = "",
+    val lastUsedAt: Long? = null,
     val createdAt: Long = System.currentTimeMillis()
 )
 
@@ -138,12 +140,12 @@ data class PaperEntity(
     val totalMarks: Float = 100.0f,
     val durationMinutes: Int = 90,
     val status: String = "DRAFT", // DRAFT, READY, IN_PROGRESS, COMPLETED
+    val instructions: String = "",
     val createdAt: Long = System.currentTimeMillis()
 )
 
 @Entity(
     tableName = "paper_questions",
-    primaryKeys = ["paperId", "questionId"],
     foreignKeys = [
         ForeignKey(
             entity = PaperEntity::class,
@@ -155,15 +157,24 @@ data class PaperEntity(
             entity = QuestionBankEntity::class,
             parentColumns = ["id"],
             childColumns = ["questionId"],
-            onDelete = ForeignKey.CASCADE
+            onDelete = ForeignKey.SET_NULL
         )
     ],
     indices = [Index("paperId"), Index("questionId")]
 )
 data class PaperQuestionEntity(
+    @PrimaryKey val id: String = UUID.randomUUID().toString(),
     val paperId: String,
-    val questionId: String,
-    val orderIndex: Int = 0
+    val questionId: String? = null,
+    val orderIndex: Int = 0,
+    val sectionName: String = "Section A",
+    val snapshotQuestionText: String = "",
+    val snapshotMarks: Float = 1.0f,
+    val snapshotQuestionType: String = "SHORT_ANSWER",
+    val snapshotDifficulty: String = "MEDIUM",
+    val snapshotAnswer: String = "",
+    val snapshotChapterId: String = "",
+    val snapshotTopicId: String? = null
 )
 
 @Entity(

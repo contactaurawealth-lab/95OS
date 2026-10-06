@@ -233,7 +233,8 @@ fun OS95NavGraph(
                     studentRepository = container.studentRepository,
                     syllabusRepository = container.syllabusRepository,
                     recallRepository = container.recallRepository,
-                    paperRepository = container.paperRepository
+                    paperRepository = container.paperRepository,
+                    marksRecoveryRepository = container.marksRecoveryRepository
                 )
             }
             HomeScreen(
@@ -261,7 +262,10 @@ fun OS95NavGraph(
         // Root 3: Recall
         composable(OS95Screen.Recall.route) {
             val vm = viewModel { RecallViewModel(container.recallRepository) }
-            RecallScreen(viewModel = vm)
+            RecallScreen(
+                viewModel = vm,
+                onNavigateToForgettingRadar = { navController.navigate(OS95Screen.Progress.route) }
+            )
         }
 
         // Root 4: Papers
@@ -269,12 +273,14 @@ fun OS95NavGraph(
             val vm = viewModel {
                 PapersViewModel(
                     paperRepository = container.paperRepository,
-                    syllabusRepository = container.syllabusRepository
+                    syllabusRepository = container.syllabusRepository,
+                    studentRepository = container.studentRepository
                 )
             }
             PapersScreen(
                 viewModel = vm,
-                onNavigateToQuestionBank = { navController.navigate(OS95Screen.QuestionBank.route) }
+                onNavigateToQuestionBank = { navController.navigate(OS95Screen.QuestionBank.route) },
+                onNavigateToAnalysis = { navController.navigate(OS95Screen.Progress.route) }
             )
         }
 
@@ -287,20 +293,26 @@ fun OS95NavGraph(
                     recallRepository = container.recallRepository
                 )
             }
-            MistakesScreen(viewModel = vm)
+            MistakesScreen(
+                viewModel = vm,
+                onNavigateToRecovery = { navController.navigate(OS95Screen.Progress.route) }
+            )
         }
 
         // Root 6: Progress
         composable(OS95Screen.Progress.route) {
             val vm = viewModel {
                 ProgressViewModel(
-                    studentRepository = container.studentRepository,
-                    syllabusRepository = container.syllabusRepository,
-                    paperRepository = container.paperRepository,
-                    mistakeRepository = container.mistakeRepository
+                    marksRecoveryRepository = container.marksRecoveryRepository,
+                    studentRepository = container.studentRepository
                 )
             }
-            ProgressScreen(viewModel = vm)
+            ProgressScreen(
+                viewModel = vm,
+                onNavigateToRecall = { navController.navigate(OS95Screen.Recall.route) },
+                onNavigateToPapers = { navController.navigate(OS95Screen.Papers.route) },
+                onNavigateToMistakes = { navController.navigate(OS95Screen.Mistakes.route) }
+            )
         }
 
         // Secondary: Subject Detail
@@ -344,7 +356,8 @@ fun OS95NavGraph(
             }
             QuestionBankScreen(
                 viewModel = vm,
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToCsvImport = { navController.navigate(OS95Screen.UniversalCsv.route) }
             )
         }
 
@@ -371,6 +384,21 @@ fun OS95NavGraph(
                 )
             }
             SettingsScreen(
+                viewModel = vm,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToUniversalCsv = { navController.navigate(OS95Screen.UniversalCsv.route) }
+            )
+        }
+
+        // Modal / Utility: Universal CSV Engine
+        composable(OS95Screen.UniversalCsv.route) {
+            val vm = viewModel {
+                com.os95.app.features.settings.UniversalCsvViewModel(
+                    csvEngine = container.universalCsvEngine,
+                    database = container.database
+                )
+            }
+            com.os95.app.features.settings.UniversalCsvScreen(
                 viewModel = vm,
                 onNavigateBack = { navController.popBackStack() }
             )
