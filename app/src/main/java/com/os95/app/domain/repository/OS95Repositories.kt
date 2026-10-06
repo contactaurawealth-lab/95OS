@@ -1,0 +1,73 @@
+package com.os95.app.domain.repository
+
+import com.os95.app.core.database.entity.ChapterEntity
+import com.os95.app.core.database.entity.ExamResultEntity
+import com.os95.app.core.database.entity.LostMarksEntity
+import com.os95.app.core.database.entity.MistakeEntity
+import com.os95.app.core.database.entity.PaperEntity
+import com.os95.app.core.database.entity.QuestionBankEntity
+import com.os95.app.core.database.entity.RecallCardEntity
+import com.os95.app.core.database.entity.RecallReviewEntity
+import com.os95.app.core.database.entity.StudentProfileEntity
+import com.os95.app.core.database.entity.StudyPreferencesEntity
+import com.os95.app.core.database.entity.StudySessionEntity
+import com.os95.app.core.database.entity.SubjectEntity
+import com.os95.app.core.database.entity.TopicEntity
+import com.os95.app.domain.model.RecallRating
+import kotlinx.coroutines.flow.Flow
+
+interface SyllabusRepository {
+    fun getAllSubjects(): Flow<List<SubjectEntity>>
+    suspend fun getSubjectById(id: String): SubjectEntity?
+    suspend fun createSubject(name: String, colorHex: String): SubjectEntity
+    suspend fun deleteSubject(subject: SubjectEntity)
+
+    fun getChaptersForSubject(subjectId: String): Flow<List<ChapterEntity>>
+    suspend fun createChapter(subjectId: String, name: String): ChapterEntity
+
+    fun getTopicsForChapter(chapterId: String): Flow<List<TopicEntity>>
+    fun getAllTopics(): Flow<List<TopicEntity>>
+    suspend fun createTopic(chapterId: String, name: String, relevance: String): TopicEntity
+    suspend fun updateTopic(topic: TopicEntity)
+
+    fun getMasteredTopicsCount(): Flow<Int>
+    fun getTotalTopicsCount(): Flow<Int>
+}
+
+interface RecallRepository {
+    fun getDueCards(now: Long = System.currentTimeMillis()): Flow<List<RecallCardEntity>>
+    fun getAllCards(): Flow<List<RecallCardEntity>>
+    suspend fun createCard(subjectId: String, chapterId: String, topicId: String?, prompt: String, answer: String): RecallCardEntity
+    suspend fun submitReview(card: RecallCardEntity, rating: RecallRating)
+    fun getRecentReviews(): Flow<List<RecallReviewEntity>>
+}
+
+interface PaperRepository {
+    fun getAllPapers(): Flow<List<PaperEntity>>
+    suspend fun getPaperById(id: String): PaperEntity?
+    suspend fun createPaper(subjectId: String, title: String, totalMarks: Float, durationMinutes: Int): PaperEntity
+    fun getAllQuestions(): Flow<List<QuestionBankEntity>>
+    suspend fun addQuestion(subjectId: String, chapterId: String, topicId: String?, text: String, marks: Float): QuestionBankEntity
+    fun getAllResults(): Flow<List<ExamResultEntity>>
+    suspend fun recordResult(paperId: String, marksObtained: Float, totalMarks: Float, timeTakenMinutes: Int, lostMarks: List<LostMarksEntity>)
+}
+
+interface MistakeRepository {
+    fun getActiveMistakes(): Flow<List<MistakeEntity>>
+    fun getAllMistakes(): Flow<List<MistakeEntity>>
+    suspend fun recordMistake(subjectId: String, chapterId: String, topicId: String?, question: String, studentAnswer: String, correctAnswer: String, category: String, marksLost: Float): MistakeEntity
+    suspend fun resolveMistake(mistake: MistakeEntity)
+}
+
+interface StudentRepository {
+    fun getProfileFlow(): Flow<StudentProfileEntity?>
+    suspend fun getProfile(): StudentProfileEntity?
+    suspend fun saveProfile(profile: StudentProfileEntity)
+
+    fun getPreferencesFlow(): Flow<StudyPreferencesEntity?>
+    suspend fun getPreferences(): StudyPreferencesEntity?
+    suspend fun savePreferences(prefs: StudyPreferencesEntity)
+
+    fun getAllSessions(): Flow<List<StudySessionEntity>>
+    suspend fun logSession(subjectId: String, chapterId: String?, durationMinutes: Int)
+}

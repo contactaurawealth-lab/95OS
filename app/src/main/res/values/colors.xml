@@ -1,0 +1,19 @@
+<resources>
+    <color name="os95_light_background">#F8F8F5</color>
+    <color name="os95_light_surface">#FFFFFF</color>
+    <color name="os95_light_primary_text">#181816</color>
+    <color name="os95_light_secondary_text">#62625C</color>
+    <color name="os95_light_muted_text">#909088</color>
+    <color name="os95_light_border">#DEDDD5</color>
+    <color name="os95_light_accent">#B8781E</color>
+
+    <color name="os95_dark_background">#121211</color>
+    <color name="os95_dark_surface">#1C1C1A</color>
+    <color name="os95_dark_primary_text">#F4F4EE</color>
+    <color name="os95_dark_secondary_text">#AFAFA4</color>
+    <color name="os95_dark_muted_text">#7E7E75</color>
+    <color name="os95_dark_border">#2D2D29</color>
+    <color name="os95_dark_accent">#D99B38</color>
+    <color name="os95_launcher_background">#121211</color>
+    <color name="studyos_launcher_background">#121211</color>
+</resources>
