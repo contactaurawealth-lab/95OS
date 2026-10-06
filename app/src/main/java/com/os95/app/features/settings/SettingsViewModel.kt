@@ -20,7 +20,8 @@ data class SettingsUiState(
 
 class SettingsViewModel(
     private val preferencesManager: PreferencesManager,
-    private val studentRepository: StudentRepository
+    private val studentRepository: StudentRepository,
+    private val database: com.os95.app.core.database.OS95Database
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -71,6 +72,16 @@ class SettingsViewModel(
         viewModelScope.launch {
             val updated = _uiState.value.preferences.copy(defaultExamDurationMinutes = minutes)
             studentRepository.savePreferences(updated)
+        }
+    }
+
+    fun resetEntireApplication(onResetComplete: () -> Unit) {
+        viewModelScope.launch {
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                database.clearAllTables()
+                preferencesManager.resetAllPreferences()
+            }
+            onResetComplete()
         }
     }
 }

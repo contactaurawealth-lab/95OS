@@ -1,5 +1,5 @@
 # Now
-- [ ] Verification: Unit tests & assembleDebug build verification
+- [ ] User feedback review and continuous feature refinement
 
 # Next
 - [ ] Longitudinal student study analytics & extended reporting
@@ -11,6 +11,11 @@
 - [ ] (No open bugs)
 
 # Completed
+- [x] Application Reset Feature: Atomic Room `clearAllTables()` and DataStore preferences wipe with confirmation dialog and navigation redirect to Onboarding
+- [x] Academic Custom Themes: 6 themes (`SYSTEM`, `WARM_OBSIDIAN`, `PAPER_WHITE`, `GRAPHITE_CHAMBER`, `SEPIA_SCHOLAR`, `FOREST_SLATE`) adhering strictly to NO PURPLE and NO DARK NAVY rules
+- [x] 18+ Subject Catalog & 7-Step Onboarding: Multi-stream presets (`PCM`, `PCB`, `Commerce`, `Humanities`), custom subject addition, board benchmarks, and structured step transitions
+- [x] Universal Markdown (`.md`) Portability Engine: Bidirectional parsing and export for Syllabus, Question Banks, Recall Cards, and Mistakes with dual format toggle and clipboard support
+- [x] Verification: Unit tests (78/78 passing) & assembleDebug build clean verification
 - [x] Phase 3: Feature 6 — Time-to-Marks Intelligence: Calculates empirical study yield per hour, prioritizes highest-impact chapters using $W \times E \times I \times C$ priority score, and displays "Best use of your next X minutes" with potential gain %
 - [x] Phase 3: Feature 7 — Adaptive Re-Test: Structured 50% weak areas, 30% recently missed concepts, and 20% mixed revision diagnostic re-tests with self-scoring, automatic mistake resolution upon scoring $\ge 90\%$, and decision guidance (`START RETEST`, `REVIEW MISTAKES`, `SKIP`)
 - [x] Phase 3: Feature 8 — Exam Readiness Simulator: Formal examination simulation with countdown timer, 1..N question status jump grid, "Mark for Review", accidental submission prevention dialog, and deterministic composite **Exam Readiness: XX%** report

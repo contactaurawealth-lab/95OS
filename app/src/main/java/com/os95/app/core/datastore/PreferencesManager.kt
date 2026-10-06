@@ -100,4 +100,10 @@ class PreferencesManager(private val context: Context) {
             prefs[KEY_AVAILABLE_STUDY_MINUTES] = minutes
         }
     }
+
+    suspend fun resetAllPreferences() {
+        context.dataStore.edit { prefs ->
+            prefs.clear()
+        }
+    }
 }

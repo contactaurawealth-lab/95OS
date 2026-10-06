@@ -105,3 +105,13 @@
 - **Data Entities:** `QuestionBankEntity`, `PaperEntity`, `PaperQuestionEntity`, `ExamResultEntity`, `LostMarksEntity`, `MistakeEntity`, `TopicEntity`, `ChapterEntity`, `SubjectEntity`, `StudySessionEntity`.
 - **Status:** Phase 3 Production Implementation.
 
+---
+
+### 1.12 System Maintenance & Customization Architecture
+- **Role:** Deep app maintenance, multi-stream curriculum onboarding, academic personalization, and universal Markdown (.md) + CSV data portability.
+- **Components:**
+  1. **Application Reset Engine:** Atomic SQLite `clearAllTables()` wipe coupled with DataStore preference teardown and backstack clearance to freshly reset the device back to pristine Onboarding. Includes confirmation safeguards.
+  2. **Academic Custom Theme System:** 6 curated themes (`SYSTEM`, `WARM_OBSIDIAN`, `PAPER_WHITE`, `GRAPHITE_CHAMBER`, `SEPIA_SCHOLAR`, `FOREST_SLATE`) adhering strictly to the 95OS palette ethos (no purple, no dark-navy-heavy themes, warm obsidian, paper whites, graphite, subtle amber/cyan accents).
+  3. **18+ Subject Catalog & 7-Step Onboarding:** 18 predefined subjects across STEM, Commerce, Humanities, and Languages with one-tap stream presets (`PCM`, `PCB`, `Commerce`, `Humanities`), custom subject addition, board benchmarks, and daily study habit commitments.
+  4. **Universal Markdown (`.md`) Portability Engine:** Bidirectional parser and exporter for Syllabus, Question Banks, Recall Cards, and Mistake Banks formatted as clean Markdown documents with checkbox states, headers, and bullet metadata, plus dual-format UI toggle and clipboard support.
+- **Status:** Production Implementation.

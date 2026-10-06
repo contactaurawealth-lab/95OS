@@ -312,4 +312,44 @@ The Advanced Exam Intelligence layer (`AdvancedExamEngine.kt` + `OfflineAdvanced
   - One-tap launch: `START ACTION` or `ALTERNATIVE`.
   - Direct integration tiles for Time-to-Marks, Adaptive Re-Test, Exam Simulator, and Last-7-Days Mode.
 
+---
+
+## 10. System Maintenance & Customization Architecture
+
+### 10.1 Application Reset Engine
+- **Atomic Local Teardown:**
+  - Located in `SettingsViewModel.resetEntireApplication()` and `PreferencesManager.resetAllPreferences()`.
+  - Executes `database.clearAllTables()` within an atomic Room SQLite operation, enforcing clean removal of all 14 database tables.
+  - Clears all DataStore preference keys, resetting onboarding state, themes, study timers, and targets.
+  - Safe navigation redirection back to `Onboarding` via `OS95NavHost` clearing the backstack.
+  - Includes modal confirmation dialog preventing accidental reset.
+
+### 10.2 Academic Theme Engine
+- **Strict Visual Restraint Standard:**
+  - 6 user-selectable academic themes: `SYSTEM`, `WARM_OBSIDIAN` (default dark), `PAPER_WHITE` (default light), `GRAPHITE_CHAMBER` (monochrome), `SEPIA_SCHOLAR` (warm library parchment), and `FOREST_SLATE` (deep night study moss).
+  - Strict compliance with 95OS design rules: zero purple, zero dark-navy-heavy palettes, warm obsidian, paper whites, graphite, subtle amber and target cyan accents.
+  - Fully reactive theme switching persisted immediately to DataStore preferences.
+
+### 10.3 18+ Subject Catalog & 7-Step Onboarding
+- **Comprehensive Subject Stream Presets:**
+  - 18 academic subjects cataloged across STEM, Commerce, Humanities, and Languages.
+  - Stream presets (`PCM`, `PCB`, `Commerce`, `Humanities`) for one-tap batch subject enrollment.
+  - Custom subject addition for student-specific local curricula.
+- **7-Step Guided Onboarding Blueprint:**
+  1. `WELCOME`: 95OS Manifesto & Offline Mission.
+  2. `PROFILE`: Student Name & Board Benchmark selection (CBSE, ICSE, State Board, Cambridge IGCSE, IB).
+  3. `EXAM_TARGET`: Target score (90%, 95%, 98%) & exam timeline (30d, 60d, 90d, 180d).
+  4. `SUBJECTS`: Stream presets, 18-subject catalog cards, custom subject creation.
+  5. `DAILY_HABIT`: Daily study commitment (30m–180m) & target exam duration.
+  6. `APPEARANCE`: Visual theme cards with palette swatches.
+  7. `SUMMARY`: Blueprint confirmation before launching 95OS Command Center.
+
+### 10.4 Universal Markdown (`.md`) Portability Engine
+- **Markdown Specification:**
+  - Implemented in `UniversalMarkdownEngine.kt` to complement `UniversalCsvProcessor.kt`.
+  - Supports bidirectional import and export for Syllabus, Question Banks, Recall Cards, and Mistake Banks.
+  - Formats headers (`# Subject`, `## Chapter`, `### Mistake / Card`), task checkboxes (`- [x] Topic`), and metadata bullet keys (`- Question:`, `- Answer:`, `- Marks:`, `- Difficulty:`).
+  - Dual format switcher in `UniversalCsvScreen` allowing seamless toggling between CSV and Markdown format templates, import preview, and one-tap clipboard copying for offline reading and physical printing.
+
+
 

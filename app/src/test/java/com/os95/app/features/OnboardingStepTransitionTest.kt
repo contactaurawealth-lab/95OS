@@ -11,13 +11,14 @@ class OnboardingStepTransitionTest {
     @Test
     fun testOnboardingStepOrderAndCount() {
         val steps = OnboardingStep.values()
-        assertEquals(6, steps.size)
+        assertEquals(7, steps.size)
         assertEquals(OnboardingStep.WELCOME, steps[0])
         assertEquals(OnboardingStep.PROFILE, steps[1])
-        assertEquals(OnboardingStep.SUBJECTS, steps[2])
-        assertEquals(OnboardingStep.EXAM_TARGET, steps[3])
-        assertEquals(OnboardingStep.APPEARANCE, steps[4])
-        assertEquals(OnboardingStep.SUMMARY, steps[5])
+        assertEquals(OnboardingStep.EXAM_TARGET, steps[2])
+        assertEquals(OnboardingStep.SUBJECTS, steps[3])
+        assertEquals(OnboardingStep.DAILY_HABIT, steps[4])
+        assertEquals(OnboardingStep.APPEARANCE, steps[5])
+        assertEquals(OnboardingStep.SUMMARY, steps[6])
     }
 
     @Test

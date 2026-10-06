@@ -393,13 +393,19 @@ fun OS95NavGraph(
             val vm = viewModel {
                 SettingsViewModel(
                     preferencesManager = container.preferencesManager,
-                    studentRepository = container.studentRepository
+                    studentRepository = container.studentRepository,
+                    database = container.database
                 )
             }
             SettingsScreen(
                 viewModel = vm,
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToUniversalCsv = { navController.navigate(OS95Screen.UniversalCsv.route) }
+                onNavigateToUniversalCsv = { navController.navigate(OS95Screen.UniversalCsv.route) },
+                onAppReset = {
+                    navController.navigate(OS95Screen.Onboarding.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
             )
         }
 
