@@ -246,4 +246,70 @@ Measures marks regained from previous exam weaknesses:
   $$\text{Recovered Marks} = \text{Normalized Previous Lost} - \text{Current Lost Marks}$$
 - Breaks down recovered marks by mistake category and per-topic delta ($\text{Previous Lost on Topic} - \text{Current Lost on Topic}$).
 
+---
+
+## 9. Advanced Exam Intelligence System Architecture (Features 6–10)
+
+The Advanced Exam Intelligence layer (`AdvancedExamEngine.kt` + `OfflineAdvancedExamRepository.kt`) builds directly on top of Room tables (`question_bank`, `papers`, `paper_questions`, `mistakes`, `exam_results`, `study_sessions`, `topics`, `chapters`, `subjects`) and DataStore preferences without cloud servers or artificial generation.
+
+```
+                  Advanced Exam Intelligence Engine
+                                 │
+     ┌──────────────────┬────────┼────────┬──────────────────┐
+     ▼                  ▼        ▼        ▼                  ▼
+6. Time-to-Marks   7. Adaptive  8. Exam  9. Last-7-Days  10. 95% Command
+   Intelligence       Re-Test   Readiness     Mode           Center
+                                Simulator
+```
+
+### 9.1 Time-to-Marks Intelligence
+- **Goal:** Predict exact study time return on target exam marks.
+- **Priority Formula:**
+  $$\text{Priority Score} = \text{Weakness} \times \text{Exam Weightage} \times \text{Improvement Potential} \times \text{Confidence Factor}$$
+  - $\text{Weakness} \in [0.1, 1.0]$: Topic weakness score + mistake frequency penalty.
+  - $\text{Exam Weightage} \in [0.7, 1.5]$: Syllabus relevance of constituent topics ($\text{HIGH} \to 1.5, \text{LOW} \to 0.7$).
+  - $\text{Improvement Potential} \in [0.5, 1.0]$: Ratio of recoverable mistake categories (careless, calculation vs deep conceptual gaps).
+  - $\text{Confidence Factor} \in [0.2, 1.0]$: Evidence scaling by previous question tests ($0.3 + 0.07 \times \min(N, 10)$).
+- **Study Time Projection:**
+  $$\text{Estimated Hours Needed} = \frac{\text{Active Lost Marks}}{\text{Expected Yield per Hour}}$$
+- **Ethical Safeguard:** Explicit labeling of all projections as deterministic empirical estimates. No score guarantees.
+
+### 9.2 Adaptive Re-Test
+- **Target Distribution Standard:**
+  - **50% Weak Syllabus Areas:** Prioritizes topics with unresolved mistakes and $\text{weaknessScore} \ge 0.5$.
+  - **30% Recently Missed Questions / Concepts:** Directly samples questions failed in previous paper runs.
+  - **20% Mixed Active Revision:** Balanced cross-topic review to prevent skill regression on mastered areas.
+- **Automatic Mistake Resolution:** Scoring $\ge 90\%$ on retest questions automatically resolves corresponding Mistake Bank entries (`isResolved = true`) and credits recovered marks.
+- **Post-Retest Decision Tree:**
+  - $\ge 85\%$ accuracy: "Mastery demonstrated. Proceed to full Exam Readiness Simulation."
+  - $65\% - 84\%$ accuracy: "Moderate improvement. Clear remaining weak concepts in Active Recall."
+  - $< 65\%$ accuracy: "High error rate. Re-study chapter concepts before next attempt."
+  - Three standardized user actions: `START RETEST`, `REVIEW MISTAKES`, `SKIP`.
+
+### 9.3 Exam Readiness Simulator
+- **Configurable Examination Standard:** Subject selection, time limits (30–180m), total marks, and difficulty calibrations.
+- **Accidental Submission Prevention:** Interactive modal displaying answered, marked for review, and unanswered tallies before finalizing scores.
+- **Active In-Exam Runner:** Real-time countdown timer, 1..N question status jump grid, "Mark for Review" toggling, and structured sectioning.
+- **Deterministic Exam Readiness Formula:**
+  $$\text{Readiness Score} = (S_{\text{recent}} \times 0.35) + (A_{\text{sim}} \times 0.25) + (C_{\text{syllabus}} \times 0.20) + (T_{\text{discipline}} \times 0.10) + (M_{\text{clean}} \times 0.10)$$
+  - $S_{\text{recent}}$ (35%): Longitudinal average of recent tests.
+  - $A_{\text{sim}}$ (25%): Immediate simulation accuracy percentage.
+  - $C_{\text{syllabus}}$ (20%): Percentage of syllabus topics with `masteryState = MASTERED`.
+  - $T_{\text{discipline}}$ (10%): Pacing diagnostic penalizing finishes that are abnormally early ($< 40\%$ allocated time) or time runouts.
+  - $M_{\text{clean}}$ (10%): Unresolved mistake cleanliness factor ($100 - \min(30, N_{\text{mistakes}} \times 2.5)$).
+
+### 9.4 Last-7-Days Mode
+- **Final-Week Sprint:** Automatically active or configurable when target exam is $\le 7$ days away.
+- **Day 7 $\to$ Day 1 Curriculum:**
+  - Day 7 to Day 2: Priority Chapter Revision + Adaptive Re-Test / Mistake Bank resolution + Spaced Recall Sprint.
+  - Day 1: Final review of core formulas, low-friction recall, and high-yield summary notes.
+- **"Today's 3 Most Important Tasks":** Highest-yield daily items with immediate checkbox completion state and adaptive rescheduling of subsequent days.
+
+### 9.5 95% Command Center
+- **5-Second Situational Awareness:**
+  - 95% TARGET: Current predicted %, Target %, Marks gap, Exam readiness %, Days remaining.
+  - "WHAT SHOULD I DO NOW?": Single primary recommended action based on deterministic highest weakness, with estimated minutes and reason.
+  - One-tap launch: `START ACTION` or `ALTERNATIVE`.
+  - Direct integration tiles for Time-to-Marks, Adaptive Re-Test, Exam Simulator, and Last-7-Days Mode.
+
 

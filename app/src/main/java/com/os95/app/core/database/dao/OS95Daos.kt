@@ -52,6 +52,9 @@ interface SyllabusDao {
     @Query("SELECT * FROM subjects ORDER BY name ASC")
     fun getAllSubjects(): Flow<List<SubjectEntity>>
 
+    @Query("SELECT * FROM subjects ORDER BY name ASC")
+    suspend fun getAllSubjectsSync(): List<SubjectEntity>
+
     @Query("SELECT * FROM subjects WHERE id = :id LIMIT 1")
     suspend fun getSubjectById(id: String): SubjectEntity?
 
@@ -68,6 +71,9 @@ interface SyllabusDao {
     suspend fun deleteSubject(subject: SubjectEntity)
 
     // Chapters
+    @Query("SELECT * FROM chapters ORDER BY orderIndex ASC, name ASC")
+    suspend fun getAllChaptersSync(): List<ChapterEntity>
+
     @Query("SELECT * FROM chapters WHERE subjectId = :subjectId ORDER BY orderIndex ASC, name ASC")
     fun getChaptersForSubject(subjectId: String): Flow<List<ChapterEntity>>
 
@@ -304,6 +310,9 @@ interface RecallDao {
 interface StudySessionDao {
     @Query("SELECT * FROM study_sessions ORDER BY completedAt DESC")
     fun getAllSessions(): Flow<List<StudySessionEntity>>
+
+    @Query("SELECT * FROM study_sessions ORDER BY completedAt DESC")
+    suspend fun getAllSessionsSync(): List<StudySessionEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSession(session: StudySessionEntity)

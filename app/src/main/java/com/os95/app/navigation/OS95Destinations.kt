@@ -39,6 +39,12 @@ sealed class OS95Screen(val route: String) {
     object QuestionBank : OS95Screen("question-bank")
     object RecallSession : OS95Screen("recall/session")
 
+    // Advanced Exam Destinations
+    object TimeToMarks : OS95Screen("time-to-marks")
+    object AdaptiveRetest : OS95Screen("adaptive-retest")
+    object ExamSimulator : OS95Screen("exam-simulator")
+    object Last7Days : OS95Screen("last-7-days")
+
     // Focus & Utility Destinations
     object Focus : OS95Screen("focus")
     object Settings : OS95Screen("settings")

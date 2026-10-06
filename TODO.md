@@ -1,21 +1,22 @@
 # Now
-- [ ] Phase 3: Time-to-Marks Intelligence & Efficiency Metrics
-- [ ] Phase 3: Adaptive Re-Test & Mistake Paper Generator
+- [ ] Verification: Unit tests & assembleDebug build verification
 
 # Next
-- [ ] Phase 3: Exam Readiness Simulator
-- [ ] Phase 3: Last-7-Days Mode & 95% Command Center
+- [ ] Longitudinal student study analytics & extended reporting
 
 # Later
-- [ ] Phase 3: Time-to-Marks Intelligence & Efficiency Metrics
-- [ ] Phase 3: Adaptive Re-Test & Mistake Paper Generator
-- [ ] Phase 3: Exam Readiness Simulator
-- [ ] Phase 3: Last-7-Days Mode & 95% Command Center
+- [ ] Optional BYOK AI sidecar assistance (strictly offline-isolated)
 
 # Bugs
 - [ ] (No open bugs)
 
 # Completed
+- [x] Phase 3: Feature 6 — Time-to-Marks Intelligence: Calculates empirical study yield per hour, prioritizes highest-impact chapters using $W \times E \times I \times C$ priority score, and displays "Best use of your next X minutes" with potential gain %
+- [x] Phase 3: Feature 7 — Adaptive Re-Test: Structured 50% weak areas, 30% recently missed concepts, and 20% mixed revision diagnostic re-tests with self-scoring, automatic mistake resolution upon scoring $\ge 90\%$, and decision guidance (`START RETEST`, `REVIEW MISTAKES`, `SKIP`)
+- [x] Phase 3: Feature 8 — Exam Readiness Simulator: Formal examination simulation with countdown timer, 1..N question status jump grid, "Mark for Review", accidental submission prevention dialog, and deterministic composite **Exam Readiness: XX%** report
+- [x] Phase 3: Feature 9 — Last-7-Days Mode: Final-week exam sprint mode active $\le 7$ days before exam date with Day 7 $\to$ Day 1 curriculum, "Today's 3 Most Important Tasks", and adaptive daily plan recalculation
+- [x] Phase 3: Feature 10 — 95% Command Center: Primary dashboard delivering 5-second situational awareness (Top 95% TARGET card with predicted %, target %, marks gap, readiness %, days remaining), Middle "WHAT SHOULD I DO NOW?" card with single high-priority action and instant launch, quick-access engine hub, and daily execution tracking
+- [x] Phase 3: Unit test suite for `AdvancedExamEngine` verifying all 5 algorithms and formulas
 - [x] Phase 3: Marks Gap Planner (CVS-Compatible) — Deterministic percentage & marks gap from 95% target, recoverable marks from active mistakes, and prioritization ranking ($M_{\text{lost}} \times F_{\text{recent}} \times W \times R \times E$)
 - [x] Phase 3: Forgetting Radar (CVS-Compatible) — SM-2 spaced repetition decay risk classifier (`CRITICAL`, `AT_RISK`, `WATCH`, `STABLE`) with one-tap jump to Recall sessions
 - [x] Phase 3: Previous Paper Analyzer (CVS-Compatible) — Historical exam performance trends (`IMPROVING`, `DECLINING`, `STABLE`), per-chapter accuracy, question-type breakdown, and repeated weakness detection across $\ge 2$ distinct papers

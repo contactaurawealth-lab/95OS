@@ -57,6 +57,14 @@ import com.os95.app.features.syllabus.ChapterDetailScreen
 import com.os95.app.features.syllabus.SubjectDetailScreen
 import com.os95.app.features.syllabus.SyllabusScreen
 import com.os95.app.features.syllabus.SyllabusViewModel
+import com.os95.app.features.papers.AdaptiveRetestScreen
+import com.os95.app.features.papers.AdaptiveRetestViewModel
+import com.os95.app.features.papers.ExamSimulatorScreen
+import com.os95.app.features.papers.ExamSimulatorViewModel
+import com.os95.app.features.progress.TimeToMarksScreen
+import com.os95.app.features.progress.TimeToMarksViewModel
+import com.os95.app.features.home.Last7DaysScreen
+import com.os95.app.features.home.Last7DaysViewModel
 
 @Composable
 fun OS95App(
@@ -234,7 +242,8 @@ fun OS95NavGraph(
                     syllabusRepository = container.syllabusRepository,
                     recallRepository = container.recallRepository,
                     paperRepository = container.paperRepository,
-                    marksRecoveryRepository = container.marksRecoveryRepository
+                    marksRecoveryRepository = container.marksRecoveryRepository,
+                    advancedExamRepository = container.advancedExamRepository
                 )
             }
             HomeScreen(
@@ -244,7 +253,11 @@ fun OS95NavGraph(
                 onNavigateToPapers = { navController.navigate(OS95Screen.Papers.route) },
                 onNavigateToMistakes = { navController.navigate(OS95Screen.Mistakes.route) },
                 onNavigateToFocus = { navController.navigate(OS95Screen.Focus.route) },
-                onNavigateToSettings = { navController.navigate(OS95Screen.Settings.route) }
+                onNavigateToSettings = { navController.navigate(OS95Screen.Settings.route) },
+                onNavigateToTimeToMarks = { navController.navigate(OS95Screen.TimeToMarks.route) },
+                onNavigateToAdaptiveRetest = { navController.navigate(OS95Screen.AdaptiveRetest.route) },
+                onNavigateToExamSimulator = { navController.navigate(OS95Screen.ExamSimulator.route) },
+                onNavigateToLast7Days = { navController.navigate(OS95Screen.Last7Days.route) }
             )
         }
 
@@ -401,6 +414,66 @@ fun OS95NavGraph(
             com.os95.app.features.settings.UniversalCsvScreen(
                 viewModel = vm,
                 onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        // Advanced Exam Feature 6: Time-to-Marks Intelligence
+        composable(OS95Screen.TimeToMarks.route) {
+            val vm = viewModel {
+                TimeToMarksViewModel(container.advancedExamRepository)
+            }
+            TimeToMarksScreen(
+                viewModel = vm,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToChapter = { chapterId ->
+                    navController.navigate(OS95Screen.ChapterDetail.createRoute(chapterId))
+                },
+                onStartFocusSession = { navController.navigate(OS95Screen.Focus.route) }
+            )
+        }
+
+        // Advanced Exam Feature 7: Adaptive Re-Test
+        composable(OS95Screen.AdaptiveRetest.route) {
+            val vm = viewModel {
+                AdaptiveRetestViewModel(
+                    advancedExamRepository = container.advancedExamRepository,
+                    syllabusRepository = container.syllabusRepository
+                )
+            }
+            AdaptiveRetestScreen(
+                viewModel = vm,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToMistakes = { navController.navigate(OS95Screen.Mistakes.route) }
+            )
+        }
+
+        // Advanced Exam Feature 8: Exam Readiness Simulator
+        composable(OS95Screen.ExamSimulator.route) {
+            val vm = viewModel {
+                ExamSimulatorViewModel(
+                    advancedExamRepository = container.advancedExamRepository,
+                    syllabusRepository = container.syllabusRepository,
+                    paperRepository = container.paperRepository
+                )
+            }
+            ExamSimulatorScreen(
+                viewModel = vm,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToRetest = { navController.navigate(OS95Screen.AdaptiveRetest.route) }
+            )
+        }
+
+        // Advanced Exam Feature 9: Last-7-Days Mode
+        composable(OS95Screen.Last7Days.route) {
+            val vm = viewModel {
+                Last7DaysViewModel(container.advancedExamRepository)
+            }
+            Last7DaysScreen(
+                viewModel = vm,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToRetest = { navController.navigate(OS95Screen.AdaptiveRetest.route) },
+                onNavigateToRecall = { navController.navigate(OS95Screen.Recall.route) },
+                onNavigateToMistakes = { navController.navigate(OS95Screen.Mistakes.route) }
             )
         }
     }

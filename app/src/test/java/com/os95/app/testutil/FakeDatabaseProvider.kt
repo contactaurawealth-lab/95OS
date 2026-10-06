@@ -69,6 +69,8 @@ class FakeSyllabusDao : SyllabusDao {
 
     override fun getAllSubjects(): Flow<List<SubjectEntity>> = subjects.asStateFlow()
 
+    override suspend fun getAllSubjectsSync(): List<SubjectEntity> = subjects.value
+
     override suspend fun getSubjectById(id: String): SubjectEntity? =
         subjects.value.firstOrNull { it.id == id }
 
@@ -88,6 +90,8 @@ class FakeSyllabusDao : SyllabusDao {
     override suspend fun deleteSubject(subject: SubjectEntity) {
         subjects.value = subjects.value.filter { it.id != subject.id }
     }
+
+    override suspend fun getAllChaptersSync(): List<ChapterEntity> = chapters.value
 
     override fun getChaptersForSubject(subjectId: String): Flow<List<ChapterEntity>> =
         chapters.map { list -> list.filter { it.subjectId == subjectId } }
@@ -386,6 +390,8 @@ class FakeStudySessionDao : StudySessionDao {
     fun clear() { sessions.value = emptyList() }
 
     override fun getAllSessions(): Flow<List<StudySessionEntity>> = sessions.asStateFlow()
+
+    override suspend fun getAllSessionsSync(): List<StudySessionEntity> = sessions.value
 
     override suspend fun insertSession(session: StudySessionEntity) {
         sessions.value = sessions.value.filter { it.id != session.id } + session

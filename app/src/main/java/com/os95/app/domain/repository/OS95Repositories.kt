@@ -101,3 +101,23 @@ interface MarksRecoveryRepository {
     suspend fun getRecoveryScore(): com.os95.app.domain.model.RecoveryScoreReport
 }
 
+interface AdvancedExamRepository {
+    suspend fun getTimeToMarksReport(availableMinutes: Int = 60, targetPercentage: Float? = null): com.os95.app.domain.model.TimeToMarksReport
+    suspend fun generateAdaptiveRetest(config: com.os95.app.domain.model.AdaptiveRetestConfig): com.os95.app.domain.model.AdaptiveRetestGenerationResult
+    suspend fun completeAdaptiveRetest(
+        paperId: String,
+        marksObtained: Float,
+        totalMarks: Float,
+        marksAwardedMap: Map<Int, Float>
+    ): com.os95.app.domain.model.AdaptiveRetestCompletionSummary
+    suspend fun generateExamSimulationPaper(config: com.os95.app.domain.model.ExamSimulatorConfig): com.os95.app.core.database.entity.PaperEntity
+    suspend fun submitExamSimulation(
+        paperId: String,
+        submission: com.os95.app.domain.model.ExamSimulationSubmission
+    ): com.os95.app.domain.model.ExamReadinessResult
+    suspend fun getLast7DaysDashboard(): com.os95.app.domain.model.Last7DaysDashboard
+    suspend fun toggleLast7DaysTask(taskId: String)
+    suspend fun setTargetExamDate(timestamp: Long?)
+    suspend fun getCommandCenterSnapshot(): com.os95.app.domain.model.CommandCenterSnapshot
+}
+

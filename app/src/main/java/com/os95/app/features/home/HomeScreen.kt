@@ -2,6 +2,7 @@ package com.os95.app.features.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,27 +15,31 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.automirrored.outlined.Assignment
+import androidx.compose.material.icons.automirrored.outlined.ShowChart
 import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.outlined.ElectricBolt
 import androidx.compose.material.icons.outlined.Psychology
+import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.School
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Speed
 import androidx.compose.material.icons.outlined.Timer
-import androidx.compose.material.icons.outlined.TrendingUp
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import com.os95.app.core.ui.component.OS95Dialog
-import com.os95.app.domain.model.RescueActionType
+import androidx.compose.material.icons.automirrored.outlined.TrendingUp
+import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,12 +47,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.os95.app.core.ui.component.OS95Button
 import com.os95.app.core.ui.component.OS95Card
+import com.os95.app.core.ui.component.OS95Dialog
 import com.os95.app.core.ui.component.OS95EmptyState
 import com.os95.app.core.ui.component.OS95IconButton
 import com.os95.app.core.ui.component.OS95LoadingState
 import com.os95.app.core.ui.component.OS95OutlinedButton
 import com.os95.app.core.ui.component.OS95ProgressBar
 import com.os95.app.core.ui.theme.OS95Theme
+import kotlin.math.roundToInt
 
 @Composable
 fun HomeScreen(
@@ -58,6 +65,10 @@ fun HomeScreen(
     onNavigateToMistakes: () -> Unit,
     onNavigateToFocus: () -> Unit,
     onNavigateToSettings: () -> Unit,
+    onNavigateToTimeToMarks: () -> Unit = {},
+    onNavigateToAdaptiveRetest: () -> Unit = {},
+    onNavigateToExamSimulator: () -> Unit = {},
+    onNavigateToLast7Days: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -73,12 +84,14 @@ fun HomeScreen(
         return
     }
 
+    val cc = uiState.commandCenter
+
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(colors.background)
             .verticalScroll(scrollState)
-            .padding(horizontal = 20.dp, vertical = 24.dp)
+            .padding(horizontal = 16.dp, vertical = 20.dp)
     ) {
         // Top Command Bar
         Row(
@@ -88,7 +101,7 @@ fun HomeScreen(
         ) {
             Column {
                 Text(
-                    text = "95OS Command Center",
+                    text = "95OS COMMAND CENTER",
                     style = typography.caption.copy(letterSpacing = 1.sp),
                     color = colors.accent
                 )
@@ -112,9 +125,11 @@ fun HomeScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(spacing.l))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        // Target Card (Target Score + Gap)
+        // =====================================================================
+        // 1. TOP SECTION: 95% TARGET (5-SECOND SITUATIONAL AWARENESS)
+        // =====================================================================
         OS95Card(
             modifier = Modifier.fillMaxWidth(),
             backgroundColor = colors.cardBackground
@@ -127,87 +142,220 @@ fun HomeScreen(
                 ) {
                     Column {
                         Text(
-                            text = "EXAM TARGET",
+                            text = "PROJECTED / TARGET",
                             style = typography.caption,
                             color = colors.mutedText
                         )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        val currentPct = cc?.currentPredictedPercentage ?: uiState.metrics.currentScorePercentage
+                        val targetPct = cc?.targetPercentage ?: uiState.targetPercentage
                         Text(
-                            text = "${uiState.targetPercentage.toInt()}%",
+                            text = "${currentPct.roundToInt()}% → ${targetPct.toInt()}%",
                             style = typography.statNumber,
                             color = colors.accentCyan
                         )
                     }
+
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
-                            text = "MARKS GAP",
+                            text = "EXAM READINESS",
                             style = typography.caption,
                             color = colors.mutedText
                         )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        val readiness = cc?.examReadinessPercentage ?: 0f
                         Text(
-                            text = if (uiState.metrics.currentScorePercentage > 0f) {
-                                "${"%.1f".format(uiState.metrics.marksGapPercentage)}% to goal"
-                            } else {
-                                "Baseline Pending"
-                            },
-                            style = typography.sectionTitle,
-                            color = colors.primaryText
+                            text = "${readiness.roundToInt()}%",
+                            style = typography.statNumber,
+                            color = if (readiness >= 75f) colors.success else colors.accent
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(spacing.m))
-                Text(
-                    text = "Closed-loop progression: Identify lost marks, eliminate mistakes, and achieve target accuracy.",
-                    style = typography.bodySmall,
-                    color = colors.secondaryText
-                )
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val gapPct = cc?.percentageGap ?: uiState.metrics.marksGapPercentage
+                    val marksGapText = cc?.marksGap?.let { " (${it.toInt()} marks away)" } ?: ""
+                    Text(
+                        text = "Gap: ${String.format("%.1f", gapPct)}%$marksGapText",
+                        style = typography.caption,
+                        color = colors.warning
+                    )
+
+                    val daysText = cc?.daysRemaining?.let { "$it Days Left" } ?: "Final Prep"
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(colors.surface)
+                            .border(1.dp, colors.border, RoundedCornerShape(8.dp))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = daysText,
+                            style = typography.caption,
+                            color = colors.primaryText
+                        )
+                    }
+                }
             }
         }
 
-        Spacer(modifier = Modifier.height(spacing.xl))
+        Spacer(modifier = Modifier.height(18.dp))
 
-        // Today's Priorities Section
+        // =====================================================================
+        // 2. MIDDLE SECTION: WHAT SHOULD I DO NOW? (PRIMARY RECOMMENDED ACTION)
+        // =====================================================================
+        val primaryAction = cc?.primaryAction
+        OS95Card(
+            modifier = Modifier.fillMaxWidth(),
+            borderColor = colors.accent
+        ) {
+            Column {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Outlined.Speed,
+                        contentDescription = null,
+                        tint = colors.accent,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "WHAT SHOULD I DO NOW?",
+                        style = typography.caption,
+                        color = colors.accent
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = primaryAction?.title ?: "Complete Daily Deliberate Practice",
+                    style = typography.sectionTitle,
+                    color = colors.primaryText
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = primaryAction?.reason ?: "Targets your highest recovery yield based on historical performance.",
+                    style = typography.bodySmall,
+                    color = colors.secondaryText
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    OS95Button(
+                        text = "START ACTION",
+                        onClick = {
+                            when (primaryAction?.actionType) {
+                                "REVISE_TOPIC" -> onNavigateToSyllabus()
+                                "RETEST_WEAKNESS" -> onNavigateToAdaptiveRetest()
+                                "RECALL_RADAR" -> onNavigateToRecall()
+                                else -> onNavigateToTimeToMarks()
+                            }
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    OS95OutlinedButton(
+                        text = "ALTERNATIVE",
+                        onClick = onNavigateToTimeToMarks,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // =====================================================================
+        // 3. ADVANCED EXAM ENGINES HUB
+        // =====================================================================
         Text(
-            text = "Today's Priorities",
-            style = typography.sectionTitle,
-            color = colors.primaryText
+            text = "EXAM ENGINES",
+            style = typography.caption,
+            color = colors.mutedText
         )
-        Spacer(modifier = Modifier.height(spacing.s))
+        Spacer(modifier = Modifier.height(10.dp))
 
+        // Row 1: Time-to-Marks + Adaptive Re-Test
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // Recall Due Tile
+            // Time-to-Marks Tile
             OS95Card(
                 modifier = Modifier.weight(1f),
-                onClick = onNavigateToRecall
+                onClick = onNavigateToTimeToMarks
             ) {
                 Column {
                     Icon(
-                        imageVector = Icons.Outlined.Psychology,
+                        imageVector = Icons.AutoMirrored.Outlined.TrendingUp,
                         contentDescription = null,
                         tint = colors.accent,
                         modifier = Modifier.size(24.dp)
                     )
-                    Spacer(modifier = Modifier.height(spacing.s))
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "${uiState.dueRecallCards.size} Cards Due",
+                        text = "Time-to-Marks",
                         style = typography.sectionTitle,
                         color = colors.primaryText
                     )
                     Text(
-                        text = "Active recall session",
+                        text = "Best next 60m yield",
                         style = typography.caption,
                         color = colors.mutedText
                     )
                 }
             }
 
-            // Practice Papers Tile
+            // Adaptive Re-Test Tile
             OS95Card(
                 modifier = Modifier.weight(1f),
-                onClick = onNavigateToPapers
+                onClick = onNavigateToAdaptiveRetest
+            ) {
+                Column {
+                    Icon(
+                        imageVector = Icons.Outlined.Refresh,
+                        contentDescription = null,
+                        tint = colors.accentCyan,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Adaptive Re-Test",
+                        style = typography.sectionTitle,
+                        color = colors.primaryText
+                    )
+                    Text(
+                        text = "50/30/20 re-test",
+                        style = typography.caption,
+                        color = colors.mutedText
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Row 2: Exam Simulator + Last-7-Days Mode
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            // Exam Simulator Tile
+            OS95Card(
+                modifier = Modifier.weight(1f),
+                onClick = onNavigateToExamSimulator
             ) {
                 Column {
                     Icon(
@@ -216,14 +364,40 @@ fun HomeScreen(
                         tint = colors.accentCyan,
                         modifier = Modifier.size(24.dp)
                     )
-                    Spacer(modifier = Modifier.height(spacing.s))
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "${uiState.recentPapers.size} Papers",
+                        text = "Exam Simulator",
                         style = typography.sectionTitle,
                         color = colors.primaryText
                     )
                     Text(
-                        text = "PaperPilot practice",
+                        text = "Timed exam runner",
+                        style = typography.caption,
+                        color = colors.mutedText
+                    )
+                }
+            }
+
+            // Last-7-Days Tile
+            OS95Card(
+                modifier = Modifier.weight(1f),
+                onClick = onNavigateToLast7Days
+            ) {
+                Column {
+                    Icon(
+                        imageVector = Icons.Outlined.DateRange,
+                        contentDescription = null,
+                        tint = colors.accent,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Last-7-Days",
+                        style = typography.sectionTitle,
+                        color = colors.primaryText
+                    )
+                    Text(
+                        text = "Final week sprint",
                         style = typography.caption,
                         color = colors.mutedText
                     )
@@ -231,12 +405,11 @@ fun HomeScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(spacing.m))
+        Spacer(modifier = Modifier.height(10.dp))
 
-        // 15-Minute Rescue Mode Priority Card
+        // 15-Minute Rescue Mode Banner
         OS95Card(
             modifier = Modifier.fillMaxWidth(),
-            backgroundColor = colors.surface,
             onClick = { showRescueDialog = true }
         ) {
             Row(
@@ -249,9 +422,9 @@ fun HomeScreen(
                         imageVector = Icons.Outlined.ElectricBolt,
                         contentDescription = null,
                         tint = colors.accent,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(22.dp)
                     )
-                    Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.width(10.dp))
                     Column {
                         Text(
                             text = "15-Minute Rescue Mode",
@@ -260,9 +433,9 @@ fun HomeScreen(
                         )
                         Text(
                             text = if (uiState.potentialRecoverableMarks > 0f) {
-                                "+${uiState.potentialRecoverableMarks.toInt()}m recoverable • ${uiState.criticalTopicsCount} topics at risk"
+                                "+${uiState.potentialRecoverableMarks.toInt()}m recoverable • ${uiState.criticalTopicsCount} at risk"
                             } else {
-                                "High-impact rapid prep right now"
+                                "Rapid high-yield intervention"
                             },
                             style = typography.caption,
                             color = colors.mutedText
@@ -278,113 +451,101 @@ fun HomeScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(spacing.xl))
+        Spacer(modifier = Modifier.height(20.dp))
 
-        // Syllabus Progress Section
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Syllabus Mastery",
-                style = typography.sectionTitle,
-                color = colors.primaryText
-            )
-            OS95Button(
-                text = "Open Syllabus",
-                onClick = onNavigateToSyllabus,
-                isSecondary = true
-            )
-        }
-        Spacer(modifier = Modifier.height(spacing.s))
+        // =====================================================================
+        // 4. TODAY'S STUDY & DIAGNOSTIC STATS
+        // =====================================================================
+        Text(
+            text = "TODAY'S EXECUTION",
+            style = typography.caption,
+            color = colors.mutedText
+        )
+        Spacer(modifier = Modifier.height(10.dp))
 
-        if (uiState.subjects.isEmpty()) {
-            OS95EmptyState(
-                title = "No subjects added yet",
-                description = "Configure your academic subjects and chapters to begin tracking syllabus mastery.",
-                primaryActionLabel = "Add Subjects",
-                onPrimaryAction = onNavigateToSyllabus
-            )
-        } else {
-            OS95Card(modifier = Modifier.fillMaxWidth()) {
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
+        OS95Card(modifier = Modifier.fillMaxWidth()) {
+            Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val studied = cc?.todayStudyMinutes ?: 0
+                    val target = cc?.todayTargetMinutes ?: 120
+                    Column {
                         Text(
-                            text = "${uiState.subjects.size} Subjects Enrolled",
-                            style = typography.bodySmall,
+                            text = "STUDY TIME TODAY",
+                            style = typography.caption,
+                            color = colors.mutedText
+                        )
+                        Text(
+                            text = "${studied}m / ${target}m",
+                            style = typography.sectionTitle,
                             color = colors.primaryText
                         )
+                    }
+
+                    Column(horizontalAlignment = Alignment.End) {
                         Text(
-                            text = "${uiState.metrics.syllabusCompletionPercentage.toInt()}% Mastered",
+                            text = "ACCURACY TREND",
                             style = typography.caption,
-                            color = colors.accent
+                            color = colors.mutedText
+                        )
+                        val trend = cc?.accuracyTrend ?: "STABLE"
+                        Text(
+                            text = trend,
+                            style = typography.caption,
+                            color = when (trend) {
+                                "IMPROVING" -> colors.success
+                                "DECLINING" -> colors.warning
+                                else -> colors.accentCyan
+                            }
                         )
                     }
-                    Spacer(modifier = Modifier.height(spacing.s))
-                    OS95ProgressBar(
-                        progress = uiState.metrics.syllabusCompletionPercentage / 100f
-                    )
                 }
+
+                Spacer(modifier = Modifier.height(10.dp))
+                val progressRatio = ((cc?.todayStudyMinutes ?: 0).toFloat() / (cc?.todayTargetMinutes ?: 120)).coerceIn(0f, 1f)
+                OS95ProgressBar(progress = progressRatio)
             }
         }
 
-        Spacer(modifier = Modifier.height(spacing.xl))
-
-        // Recent Papers / Diagnostic Section
-        Text(
-            text = "Recent Papers & Diagnostics",
-            style = typography.sectionTitle,
-            color = colors.primaryText
-        )
-        Spacer(modifier = Modifier.height(spacing.s))
-
-        if (uiState.recentPapers.isEmpty()) {
-            OS95EmptyState(
-                title = "No practice papers yet",
-                description = "Create and run practice papers to start measuring exam performance and diagnostic lost marks.",
-                primaryActionLabel = "Create First Paper",
-                onPrimaryAction = onNavigateToPapers
-            )
-        } else {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                uiState.recentPapers.forEach { paper ->
-                    OS95Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = onNavigateToPapers
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column {
-                                Text(
-                                    text = paper.title,
-                                    style = typography.sectionTitle,
-                                    color = colors.primaryText
-                                )
-                                Text(
-                                    text = "${paper.durationMinutes}m • Max Marks: ${paper.totalMarks.toInt()}",
-                                    style = typography.caption,
-                                    color = colors.mutedText
-                                )
-                            }
-                            Text(
-                                text = paper.status,
-                                style = typography.caption,
-                                color = colors.accent
-                            )
-                        }
+        // Weakest Chapters Spotlight
+        if (cc?.topThreeWeakChapters?.isNotEmpty() == true) {
+            Spacer(modifier = Modifier.height(16.dp))
+            OS95Card(modifier = Modifier.fillMaxWidth()) {
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Outlined.WarningAmber,
+                            contentDescription = null,
+                            tint = colors.warning,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "TOP WEAKNESS SPOTLIGHT",
+                            style = typography.caption,
+                            color = colors.warning
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    cc.topThreeWeakChapters.forEach { (chapterName, _) ->
+                        Text(
+                            text = "• $chapterName",
+                            style = typography.body,
+                            color = colors.primaryText,
+                            modifier = Modifier.padding(vertical = 2.dp)
+                        )
                     }
                 }
             }
         }
+
+        Spacer(modifier = Modifier.height(24.dp))
     }
 
+    // 15-Minute Rescue Mode Modal
     if (showRescueDialog) {
         val rescuePlan = uiState.rescuePlan
         OS95Dialog(

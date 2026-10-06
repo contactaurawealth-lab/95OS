@@ -57,3 +57,13 @@ Subject
 ## 5. Target User
 - Students preparing for high-stakes competitive, board, entrance, and university exams (e.g. CBSE, ICSE, JEE, NEET, SAT, AP, GCSE, A-Levels, University Finals).
 - Aiming for mastery and top-percentile scores (target 95%+).
+
+---
+
+## 6. Advanced Exam Intelligence Engine
+1. **Time-to-Marks Intelligence:** Deterministic prioritization ($W \times E \times I \times C$) directing the student's next 30/60/90/120 minutes to highest-yield chapters.
+2. **Adaptive Re-Test:** Targeted re-examinations distributing 50% weak areas, 30% recent mistakes, and 20% mixed revision.
+3. **Exam Readiness Simulator:** Realistic simulated exam environment with countdown, jump navigation, anti-accidental submission, and composite multi-factor readiness score.
+4. **Last-7-Days Mode:** Daily countdown curriculum (Day 7 down to Day 1) activating within 7 days of the exam date.
+5. **95% Command Center:** Five-second situational awareness dashboard with immediate "WHAT SHOULD I DO NOW?" primary action.
+

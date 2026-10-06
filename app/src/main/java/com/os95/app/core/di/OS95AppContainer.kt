@@ -76,4 +76,22 @@ class OS95AppContainer(context: Context) {
     val csvProcessor: UniversalCsvProcessor by lazy {
         DefaultUniversalCsvProcessor(universalCsvEngine)
     }
+
+    val advancedExamEngine: com.os95.app.domain.engine.AdvancedExamEngine by lazy {
+        com.os95.app.domain.engine.AdvancedExamEngine()
+    }
+
+    val advancedExamRepository: com.os95.app.domain.repository.AdvancedExamRepository by lazy {
+        com.os95.app.data.repository.OfflineAdvancedExamRepository(
+            engine = advancedExamEngine,
+            preferencesManager = preferencesManager,
+            studentDao = database.studentDao(),
+            syllabusDao = database.syllabusDao(),
+            paperDao = database.paperPilotDao(),
+            mistakeDao = database.mistakeDao(),
+            recallDao = database.recallDao(),
+            sessionDao = database.studySessionDao()
+        )
+    }
 }
+

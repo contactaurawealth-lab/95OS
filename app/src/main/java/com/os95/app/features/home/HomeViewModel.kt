@@ -27,6 +27,7 @@ data class HomeUiState(
     val potentialRecoverableMarks: Float = 0f,
     val criticalTopicsCount: Int = 0,
     val rescuePlan: com.os95.app.domain.model.RescuePlan? = null,
+    val commandCenter: com.os95.app.domain.model.CommandCenterSnapshot? = null,
     val feedbackMessage: String? = null,
     val isLoading: Boolean = true
 )
@@ -36,7 +37,8 @@ class HomeViewModel(
     private val syllabusRepository: SyllabusRepository,
     private val recallRepository: RecallRepository,
     private val paperRepository: PaperRepository,
-    private val marksRecoveryRepository: com.os95.app.domain.repository.MarksRecoveryRepository? = null
+    private val marksRecoveryRepository: com.os95.app.domain.repository.MarksRecoveryRepository? = null,
+    private val advancedExamRepository: com.os95.app.domain.repository.AdvancedExamRepository? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -108,6 +110,19 @@ class HomeViewModel(
                 }
             }
         }
+
+        refreshCommandCenter()
+    }
+
+    fun refreshCommandCenter() {
+        if (advancedExamRepository != null) {
+            viewModelScope.launch {
+                try {
+                    val snapshot = advancedExamRepository.getCommandCenterSnapshot()
+                    _uiState.value = _uiState.value.copy(commandCenter = snapshot)
+                } catch (_: Exception) {}
+            }
+        }
     }
 
     fun completeRescueSession(durationMinutes: Int) {
@@ -122,6 +137,7 @@ class HomeViewModel(
             _uiState.value = _uiState.value.copy(
                 feedbackMessage = "Completed $durationMinutes-min Rescue Session! Recorded to study history."
             )
+            refreshCommandCenter()
         }
     }
 

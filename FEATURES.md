@@ -87,16 +87,21 @@
 
 ---
 
-## 2. Planned Advanced Features (Architecture & Contracts Established)
-
-1. **Time-to-Marks Intelligence:**
-   Measures efficiency of study minutes converted into recoverable marks.
-2. **Adaptive Re-Test:**
-   Automatically constructs focused re-tests composed of prior mistakes and adjacent topic questions.
-3. **Exam Readiness Simulator:**
-   Simulates expected exam score using local historical performance and topic mastery data.
-4. **Last-7-Days Mode:**
-   High-stakes final sprint UI prioritizing only high-yield topics and critical mistakes.
-5. **95% Command Center:**
-   The ultimate decision engine answering: *"What should I do right now to move closer to 95%?"*
+### 1.11 Advanced Exam Intelligence (Features 6–10)
+- **Role:** High-impact study yield intelligence, targeted diagnostic re-tests, realistic examination simulations, final-week sprint coordination, and the primary 95OS situational command dashboard.
+- **Components:**
+  1. **Time-to-Marks Intelligence (Feature 6):**
+     Calculates empirical study time return on marks investment using deterministic priority ranking:
+     $$\text{Priority Score} = \text{Weakness} \times \text{Exam Weightage} \times \text{Improvement Potential} \times \text{Confidence Factor}$$
+     Outputs "Best use of your next X minutes" with chapter-level potential gains (+XX% gain) and estimated hours needed.
+  2. **Adaptive Re-Test (Feature 7):**
+     Constructs personalized diagnostic re-tests following the 50% weak areas, 30% recently missed concepts, and 20% mixed revision distribution. Features self-evaluation, automatic mistake resolution upon scoring $\ge 90\%$, and decision guidance with `START RETEST`, `REVIEW MISTAKES`, and `SKIP`.
+  3. **Exam Readiness Simulator (Feature 8):**
+     Simulates formal examination conditions with configurable duration (30–180m), marks, difficulty, live ticking countdown timer, 1..N question status jump grid, "Mark for Review" toggling, and accidental submission confirmation modals. Computes composite **Exam Readiness: XX%** across recent scores (35%), simulation accuracy (25%), syllabus coverage (20%), time discipline (10%), and mistake factor (10%).
+  4. **Last-7-Days Mode (Feature 9):**
+     Final-week exam sprint mode active $\le 7$ days before the target date. Provides a Day 7 down to Day 1 curriculum, prioritizing high-yield weak chapters, adaptive re-tests, mistake audits, and recall sprints. Highlights "Today's 3 Most Important Tasks" with immediate completion checkoff.
+  5. **95% Command Center (Feature 10):**
+     The primary dashboard of 95OS delivering 5-second situational awareness: Top 95% TARGET card (Current predicted %, Target %, Marks gap, Exam readiness %, Days remaining), Middle "WHAT SHOULD I DO NOW?" card with single high-priority action and instant launch, quick-launch engine hub, and daily study execution tracking.
+- **Data Entities:** `QuestionBankEntity`, `PaperEntity`, `PaperQuestionEntity`, `ExamResultEntity`, `LostMarksEntity`, `MistakeEntity`, `TopicEntity`, `ChapterEntity`, `SubjectEntity`, `StudySessionEntity`.
+- **Status:** Phase 3 Production Implementation.
 
