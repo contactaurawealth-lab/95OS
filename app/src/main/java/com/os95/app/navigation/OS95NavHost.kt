@@ -45,6 +45,8 @@ import com.os95.app.features.onboarding.OnboardingScreen
 import com.os95.app.features.onboarding.OnboardingViewModel
 import com.os95.app.features.papers.PapersScreen
 import com.os95.app.features.papers.PapersViewModel
+import com.os95.app.features.papers.QuestionBankScreen
+import com.os95.app.features.papers.QuestionBankViewModel
 import com.os95.app.features.progress.ProgressScreen
 import com.os95.app.features.progress.ProgressViewModel
 import com.os95.app.features.recall.RecallScreen
@@ -270,7 +272,10 @@ fun OS95NavGraph(
                     syllabusRepository = container.syllabusRepository
                 )
             }
-            PapersScreen(viewModel = vm)
+            PapersScreen(
+                viewModel = vm,
+                onNavigateToQuestionBank = { navController.navigate(OS95Screen.QuestionBank.route) }
+            )
         }
 
         // Root 5: Mistakes
@@ -278,7 +283,8 @@ fun OS95NavGraph(
             val vm = viewModel {
                 MistakesViewModel(
                     mistakeRepository = container.mistakeRepository,
-                    syllabusRepository = container.syllabusRepository
+                    syllabusRepository = container.syllabusRepository,
+                    recallRepository = container.recallRepository
                 )
             }
             MistakesScreen(viewModel = vm)
@@ -325,6 +331,20 @@ fun OS95NavGraph(
                 chapterId = chapterId,
                 viewModel = vm,
                 onBack = { navController.popBackStack() }
+            )
+        }
+
+        // Secondary: Question Bank
+        composable(OS95Screen.QuestionBank.route) {
+            val vm = viewModel {
+                QuestionBankViewModel(
+                    paperRepository = container.paperRepository,
+                    syllabusRepository = container.syllabusRepository
+                )
+            }
+            QuestionBankScreen(
+                viewModel = vm,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 

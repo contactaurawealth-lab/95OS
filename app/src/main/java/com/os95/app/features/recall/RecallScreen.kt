@@ -1,6 +1,7 @@
 package com.os95.app.features.recall
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,6 +23,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.os95.app.core.ui.component.OS95Button
 import com.os95.app.core.ui.component.OS95Card
@@ -42,6 +44,7 @@ fun RecallScreen(
     val colors = OS95Theme.colors
     val typography = OS95Theme.typography
     val spacing = OS95Theme.spacing
+    val shapes = OS95Theme.shapes
     val scrollState = rememberScrollState()
 
     Column(
@@ -101,16 +104,58 @@ fun RecallScreen(
                 }
             }
 
+            // Session Presets Selector
+            Text(
+                text = "Session Presets",
+                style = typography.caption,
+                color = colors.mutedText
+            )
+            Spacer(modifier = Modifier.height(spacing.xs))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                RecallPreset.values().forEach { preset ->
+                    val isSelected = uiState.selectedPreset == preset
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(shapes.pill)
+                            .background(if (isSelected) colors.accent else colors.cardBackground)
+                            .clickable { viewModel.selectPreset(preset) }
+                            .padding(vertical = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = preset.label,
+                            style = typography.caption,
+                            color = if (isSelected) colors.surface else colors.secondaryText
+                        )
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(spacing.xl))
 
             // Active Review Session or Clean Empty State
             val activeCard = uiState.activeSessionCard
             if (activeCard != null) {
-                Text(
-                    text = "Active Spaced Review (SM-2)",
-                    style = typography.sectionTitle,
-                    color = colors.primaryText
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Active Spaced Review (SM-2)",
+                        style = typography.sectionTitle,
+                        color = colors.primaryText
+                    )
+                    Text(
+                        text = "Completed: ${uiState.completedInSession}",
+                        style = typography.caption,
+                        color = colors.accent
+                    )
+                }
                 Spacer(modifier = Modifier.height(spacing.s))
 
                 OS95Card(

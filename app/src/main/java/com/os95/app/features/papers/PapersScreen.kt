@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.QuestionAnswer
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -37,6 +38,7 @@ import com.os95.app.core.ui.theme.OS95Theme
 fun PapersScreen(
     viewModel: PapersViewModel,
     onNavigateBack: (() -> Unit)? = null,
+    onNavigateToQuestionBank: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -56,6 +58,11 @@ fun PapersScreen(
             subtitle = "${uiState.papers.size} Papers",
             onBack = onNavigateBack,
             actions = {
+                OS95IconButton(
+                    icon = Icons.Outlined.QuestionAnswer,
+                    contentDescription = "Question Bank",
+                    onClick = onNavigateToQuestionBank
+                )
                 OS95IconButton(
                     icon = Icons.Outlined.Add,
                     contentDescription = "Create Paper",

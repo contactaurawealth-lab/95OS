@@ -38,6 +38,8 @@ interface RecallRepository {
     fun getDueCards(now: Long = System.currentTimeMillis()): Flow<List<RecallCardEntity>>
     fun getAllCards(): Flow<List<RecallCardEntity>>
     suspend fun createCard(subjectId: String, chapterId: String, topicId: String?, prompt: String, answer: String): RecallCardEntity
+    suspend fun createCardFromMistake(mistake: MistakeEntity): RecallCardEntity
+    suspend fun deleteCard(card: RecallCardEntity)
     suspend fun submitReview(card: RecallCardEntity, rating: RecallRating)
     fun getRecentReviews(): Flow<List<RecallReviewEntity>>
 }
@@ -46,8 +48,14 @@ interface PaperRepository {
     fun getAllPapers(): Flow<List<PaperEntity>>
     suspend fun getPaperById(id: String): PaperEntity?
     suspend fun createPaper(subjectId: String, title: String, totalMarks: Float, durationMinutes: Int): PaperEntity
+    suspend fun deletePaper(paper: PaperEntity)
     fun getAllQuestions(): Flow<List<QuestionBankEntity>>
-    suspend fun addQuestion(subjectId: String, chapterId: String, topicId: String?, text: String, marks: Float): QuestionBankEntity
+    fun getQuestionsForSubject(subjectId: String): Flow<List<QuestionBankEntity>>
+    suspend fun addQuestion(subjectId: String, chapterId: String, topicId: String?, text: String, marks: Float, difficulty: String = "MEDIUM", questionType: String = "SHORT_ANSWER"): QuestionBankEntity
+    suspend fun updateQuestion(question: QuestionBankEntity)
+    suspend fun deleteQuestion(question: QuestionBankEntity)
+    fun getQuestionsForPaper(paperId: String): Flow<List<QuestionBankEntity>>
+    suspend fun generatePaperBlueprint(subjectId: String, title: String, targetMarks: Float, durationMinutes: Int): PaperEntity
     fun getAllResults(): Flow<List<ExamResultEntity>>
     suspend fun recordResult(paperId: String, marksObtained: Float, totalMarks: Float, timeTakenMinutes: Int, lostMarks: List<LostMarksEntity>)
 }

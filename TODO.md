@@ -1,11 +1,9 @@
 # Now
-- [ ] Phase 2: Implement full interactive Question Bank Repository & Management UI
-- [ ] Phase 2: Extend Recall Engine runner with Mistake Bank automatic linkage & Leitner presets
-
-# Next
 - [ ] Phase 2: PaperPilot paper blueprint builder and exam generation engine
 - [ ] Phase 2: Offline Printable PDF exam paper generator
 - [ ] Phase 2: Real Exam Mode foreground timer service & distraction block coordinator
+
+# Next
 - [ ] Phase 2: Result recording & diagnostic flow with question-level loss categorization
 - [ ] Phase 2: Universal CSV multi-entity bulk import/export execution
 
@@ -22,6 +20,8 @@
 - [ ] (No open bugs)
 
 # Completed
+- [x] Phase 2: Question Bank Engine & Management UI with subject/difficulty filters and search
+- [x] Phase 2: Active Recall session presets (Blitz 5, Focused 10, Deep 20, All Due) & Mistake Bank auto-linkage ("To Recall")
 - [x] Codebase inspection & complete 95OS architecture mapping
 - [x] Standalone 95OS project initialized in `/root/95OS` with namespace `com.os95.app`
 - [x] Product Documentation Suite: `AGENTS.md`, `PRODUCT.md`, `FEATURES.md`, `ARCHITECTURE.md`, `TODO.md`

@@ -36,6 +36,7 @@ sealed class OS95Screen(val route: String) {
         fun createRoute(paperId: String) = "paper/$paperId"
     }
 
+    object QuestionBank : OS95Screen("question-bank")
     object RecallSession : OS95Screen("recall/session")
 
     // Focus & Utility Destinations

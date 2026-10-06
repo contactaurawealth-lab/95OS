@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.Psychology
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -180,6 +181,12 @@ fun MistakesScreen(
                                 horizontalArrangement = Arrangement.End
                             ) {
                                 OS95OutlinedButton(
+                                    text = "To Recall",
+                                    icon = Icons.Outlined.Psychology,
+                                    onClick = { viewModel.convertToRecallCard(mistake) }
+                                )
+                                Spacer(modifier = Modifier.width(spacing.s))
+                                OS95Button(
                                     text = "Mark Resolved",
                                     icon = Icons.Outlined.Check,
                                     onClick = { viewModel.resolveMistake(mistake) }

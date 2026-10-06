@@ -28,6 +28,7 @@ import com.os95.app.domain.repository.RecallRepository
 import com.os95.app.domain.repository.StudentRepository
 import com.os95.app.domain.repository.SyllabusRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import java.util.UUID
 
 class OfflineSyllabusRepository(
@@ -99,6 +100,24 @@ class OfflineRecallRepository(
         return card
     }
 
+    override suspend fun createCardFromMistake(mistake: MistakeEntity): RecallCardEntity {
+        val card = RecallCardEntity(
+            subjectId = mistake.subjectId,
+            chapterId = mistake.chapterId,
+            topicId = mistake.topicId,
+            prompt = mistake.question,
+            expectedAnswer = mistake.correctAnswer,
+            explanation = "Recovered from mistake (lost ${mistake.marksLost} marks)",
+            intervalDays = 1,
+            easeFactor = 2.3f, // slightly lower initial ease factor for errors
+            repetitions = 0
+        )
+        dao.insertCard(card)
+        return card
+    }
+
+    override suspend fun deleteCard(card: RecallCardEntity) = dao.deleteCard(card)
+
     override suspend fun submitReview(card: RecallCardEntity, rating: RecallRating) {
         val now = System.currentTimeMillis()
         val sm2 = SM2Engine.calculateNextReview(
@@ -153,24 +172,77 @@ class OfflinePaperRepository(
         return paper
     }
 
+    override suspend fun deletePaper(paper: PaperEntity) = dao.deletePaper(paper)
+
     override fun getAllQuestions(): Flow<List<QuestionBankEntity>> = dao.getAllQuestions()
+
+    override fun getQuestionsForSubject(subjectId: String): Flow<List<QuestionBankEntity>> =
+        dao.getQuestionsForSubject(subjectId)
 
     override suspend fun addQuestion(
         subjectId: String,
         chapterId: String,
         topicId: String?,
         text: String,
-        marks: Float
+        marks: Float,
+        difficulty: String,
+        questionType: String
     ): QuestionBankEntity {
         val question = QuestionBankEntity(
             subjectId = subjectId,
             chapterId = chapterId,
             topicId = topicId,
             questionText = text,
-            marks = marks
+            marks = marks,
+            difficulty = difficulty,
+            questionType = questionType
         )
         dao.insertQuestion(question)
         return question
+    }
+
+    override suspend fun updateQuestion(question: QuestionBankEntity) = dao.updateQuestion(question)
+
+    override suspend fun deleteQuestion(question: QuestionBankEntity) = dao.deleteQuestion(question)
+
+    override fun getQuestionsForPaper(paperId: String): Flow<List<QuestionBankEntity>> =
+        dao.getQuestionsForPaper(paperId)
+
+    override suspend fun generatePaperBlueprint(
+        subjectId: String,
+        title: String,
+        targetMarks: Float,
+        durationMinutes: Int
+    ): PaperEntity {
+        val paper = PaperEntity(
+            subjectId = subjectId,
+            title = title,
+            totalMarks = targetMarks,
+            durationMinutes = durationMinutes,
+            status = "READY"
+        )
+        dao.insertPaper(paper)
+
+        // Select available questions for this subject
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            val questions = dao.getQuestionsForSubject(subjectId).first()
+            var currentTotal = 0f
+            var order = 1
+            for (q in questions) {
+                if (currentTotal + q.marks <= targetMarks || currentTotal == 0f) {
+                    dao.insertPaperQuestion(
+                        com.os95.app.core.database.entity.PaperQuestionEntity(
+                            paperId = paper.id,
+                            questionId = q.id,
+                            orderIndex = order++
+                        )
+                    )
+                    currentTotal += q.marks
+                    if (currentTotal >= targetMarks) break
+                }
+            }
+        }
+        return paper
     }
 
     override fun getAllResults(): Flow<List<ExamResultEntity>> = dao.getAllResults()

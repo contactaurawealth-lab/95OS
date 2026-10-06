@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.os95.app.core.database.entity.MistakeEntity
 import com.os95.app.core.database.entity.SubjectEntity
 import com.os95.app.domain.repository.MistakeRepository
+import com.os95.app.domain.repository.RecallRepository
 import com.os95.app.domain.repository.SyllabusRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,12 +16,14 @@ data class MistakesUiState(
     val activeMistakes: List<MistakeEntity> = emptyList(),
     val subjects: List<SubjectEntity> = emptyList(),
     val totalMarksLost: Float = 0f,
+    val feedbackMessage: String? = null,
     val isLoading: Boolean = true
 )
 
 class MistakesViewModel(
     private val mistakeRepository: MistakeRepository,
-    private val syllabusRepository: SyllabusRepository
+    private val syllabusRepository: SyllabusRepository,
+    private val recallRepository: RecallRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MistakesUiState())
@@ -71,9 +74,22 @@ class MistakesViewModel(
         }
     }
 
+    fun convertToRecallCard(mistake: MistakeEntity) {
+        viewModelScope.launch {
+            recallRepository.createCardFromMistake(mistake)
+            _uiState.value = _uiState.value.copy(
+                feedbackMessage = "Card added to Active Recall schedule."
+            )
+        }
+    }
+
     fun resolveMistake(mistake: MistakeEntity) {
         viewModelScope.launch {
             mistakeRepository.resolveMistake(mistake)
         }
+    }
+
+    fun clearFeedback() {
+        _uiState.value = _uiState.value.copy(feedbackMessage = null)
     }
 }

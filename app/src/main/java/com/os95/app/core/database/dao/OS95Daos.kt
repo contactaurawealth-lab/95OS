@@ -115,6 +115,12 @@ interface PaperPilotDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertQuestion(question: QuestionBankEntity)
 
+    @Update
+    suspend fun updateQuestion(question: QuestionBankEntity)
+
+    @Delete
+    suspend fun deleteQuestion(question: QuestionBankEntity)
+
     // Papers
     @Query("SELECT * FROM papers ORDER BY createdAt DESC")
     fun getAllPapers(): Flow<List<PaperEntity>>
@@ -128,8 +134,14 @@ interface PaperPilotDao {
     @Update
     suspend fun updatePaper(paper: PaperEntity)
 
+    @Delete
+    suspend fun deletePaper(paper: PaperEntity)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPaperQuestion(join: PaperQuestionEntity)
+
+    @Query("SELECT q.* FROM question_bank q INNER JOIN paper_questions pq ON q.id = pq.questionId WHERE pq.paperId = :paperId ORDER BY pq.orderIndex ASC")
+    fun getQuestionsForPaper(paperId: String): Flow<List<QuestionBankEntity>>
 
     // Exam Results
     @Query("SELECT * FROM exam_results ORDER BY completedAt DESC")
