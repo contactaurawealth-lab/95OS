@@ -48,15 +48,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.os95.app.core.ui.component.LocalDrawerOpener
 import com.os95.app.core.ui.component.OS95Button
 import com.os95.app.core.ui.component.OS95Card
 import com.os95.app.core.ui.component.OS95Dialog
 import com.os95.app.core.ui.component.OS95EmptyState
 import com.os95.app.core.ui.component.OS95IconButton
 import com.os95.app.core.ui.component.OS95LoadingState
+import com.os95.app.core.ui.component.OS95MenuAction
 import com.os95.app.core.ui.component.OS95OutlinedButton
+import com.os95.app.core.ui.component.OS95OverflowMenu
 import com.os95.app.core.ui.component.OS95ProgressBar
 import com.os95.app.core.ui.theme.OS95Theme
 import kotlin.math.roundToInt
@@ -106,17 +110,28 @@ fun HomeScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
-                Text(
-                    text = "95OS COMMAND CENTER",
-                    style = typography.caption.copy(letterSpacing = 1.sp),
-                    color = colors.accent
-                )
-                Text(
-                    text = uiState.studentName,
-                    style = typography.heroTitle,
-                    color = colors.primaryText
-                )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                val drawerOpener = LocalDrawerOpener.current
+                if (drawerOpener != null) {
+                    OS95IconButton(
+                        icon = Icons.Outlined.Menu,
+                        contentDescription = "Open Navigation Drawer",
+                        onClick = drawerOpener
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                }
+                Column {
+                    Text(
+                        text = "95OS COMMAND CENTER",
+                        style = typography.caption.copy(letterSpacing = 1.sp),
+                        color = colors.accent
+                    )
+                    Text(
+                        text = uiState.studentName,
+                        style = typography.heroTitle,
+                        color = colors.primaryText
+                    )
+                }
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 OS95IconButton(
@@ -128,6 +143,40 @@ fun HomeScreen(
                     icon = Icons.Outlined.Settings,
                     contentDescription = "Settings",
                     onClick = onNavigateToSettings
+                )
+                OS95OverflowMenu(
+                    actions = listOf(
+                        OS95MenuAction(
+                            label = "Formula Vault",
+                            icon = Icons.Outlined.Functions,
+                            onClick = onNavigateToFormulaVault
+                        ),
+                        OS95MenuAction(
+                            label = "T-3H Exam Protocol",
+                            icon = Icons.Outlined.Checklist,
+                            onClick = onNavigateToExamDayProtocol
+                        ),
+                        OS95MenuAction(
+                            label = "Time-to-Marks Intel",
+                            icon = Icons.Outlined.Speed,
+                            onClick = onNavigateToTimeToMarks
+                        ),
+                        OS95MenuAction(
+                            label = "Adaptive Re-Test",
+                            icon = Icons.Outlined.Refresh,
+                            onClick = onNavigateToAdaptiveRetest
+                        ),
+                        OS95MenuAction(
+                            label = "Exam Simulator",
+                            icon = Icons.Outlined.School,
+                            onClick = onNavigateToExamSimulator
+                        ),
+                        OS95MenuAction(
+                            label = "Last-7-Days Mode",
+                            icon = Icons.Outlined.DateRange,
+                            onClick = onNavigateToLast7Days
+                        )
+                    )
                 )
             }
         }

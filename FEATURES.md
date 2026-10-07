@@ -129,6 +129,28 @@
   6. **Target Score Sensitivity ("What-If") Calculator:** Dynamic marks sensitivity simulation slider in `ProgressScreen` projecting real-time percentage and marks gap changes from targeted topic recoveries.
   7. **Formula & Key Definition Vault:** Dedicated formula and law management screen (`FormulaVaultScreen`) with subject filtering, monospace equation formatting, explanation notes, and bookmarking.
   8. **"T-Minus 3 Hours" Exam Day Protocol:** Pre-exam morning operational suite with a logistics checklist, departure/arrival timeline, and 5-card cognitive priming with an interactive 4-4-4-4 box breathing engine.
-  9. **100% Offline Procedural Focus Audio Generator:** Real-time PCM audio synthesis using Android `AudioTrack` (Brownian noise, Pink noise, and Analog Exam Clock Tick) with 0 KB asset files operating under Airplane Mode.
-- **Status:** Production Implementation.
+---
 
+### 1.14 Side Bar Navigation Drawer & Calm Dropdown Interaction Suite
+- **Role:** Deep, friction-free accessibility across the entire 15-screen academic operating system without cluttering primary bottom navigation or requiring endless dashboard scrolling.
+- **Components:**
+  1. **Global Side Bar Navigation Drawer (`OS95NavigationDrawer`):**
+     - Full-featured `ModalNavigationDrawer` with edge-swipe gestures and `OS95TopBar` hamburger menu activation.
+     - Live student profile header featuring Cadet Scholar name, target percentage badge (`95% TARGET`), current target exam, and real-time `● OFFLINE` status indicator.
+     - Categorized structural navigation sections:
+       - **Core Exam Loop:** Command Center, Syllabus Tracker, Recall Engine, Practice Papers, Mistake Bank, and Score & Radar.
+       - **Advanced Exam Engines:** Time-to-Marks Intel, Adaptive Re-Test, Exam Simulator, and Last-7-Days Mode.
+       - **High-Yield Vaults:** Formula Vault, T-3H Exam Protocol, and Focus & Acoustics.
+       - **System & Sovereignty:** Universal CSV/Markdown Data Portability and Settings & Targets.
+     - 44dp minimum touch ergonomics, active destination indicator strips, and responsive support for phones and tablets.
+  2. **Calm Obsidian Dropdown Menu System (`OS95Dropdowns`):**
+     - `OS95DropdownMenu`: Restrained dark obsidian surface with subtle graphite border and rounded corners matching `OS95Theme`.
+     - `OS95DropdownMenuItem`: 44dp touch target with optional leading icon, trailing badge/counter, active check indicator, and destructive styling.
+     - `OS95DropdownSelector<T>`: Generic outlined selection box with animated rotating chevron arrow (`0°` to `180°`), placeholder support, and automated popup management.
+     - `OS95OverflowMenu`: Standard 3-dot vertical action list seamlessly embedded in `OS95TopBar`.
+  3. **Contextual Screen Integrations:**
+     - **Question Bank:** Dual dropdown selectors for Subject and Difficulty filtering, plus overflow actions for CSV import and filter reset.
+     - **Recall Engine:** Dropdown selector for Spaced Repetition review presets (Blitz, Focused, Deep, All Due) and overflow menu shortcuts.
+     - **Focus & Exam Mode:** Dropdown selector for procedural offline acoustic profiles (Mute, Brown Noise, Pink Noise, Exam Clock Tick) and duration presets.
+     - **Command Center & Practice Papers:** Instant 3-dot overflow menus providing one-tap access to advanced diagnostic engines and exam builders.
+- **Status:** Production Implementation.

@@ -27,6 +27,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.os95.app.core.ui.theme.OS95Theme
 
+import androidx.compose.material.icons.outlined.Menu
+import androidx.compose.runtime.staticCompositionLocalOf
+
+/**
+ * Composition local providing a lambda to open the global navigation drawer.
+ */
+val LocalDrawerOpener = staticCompositionLocalOf<(() -> Unit)?> { null }
+
 data class OS95NavItem(
     val route: String,
     val title: String,
@@ -39,11 +47,14 @@ fun OS95TopBar(
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     onBack: (() -> Unit)? = null,
+    onOpenDrawer: (() -> Unit)? = null,
+    overflowActions: List<OS95MenuAction> = emptyList(),
     actions: @Composable RowScope.() -> Unit = {}
 ) {
     val colors = OS95Theme.colors
     val typography = OS95Theme.typography
     val spacing = OS95Theme.spacing
+    val drawerOpener = LocalDrawerOpener.current
 
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -61,6 +72,13 @@ fun OS95TopBar(
                     icon = Icons.AutoMirrored.Outlined.ArrowBack,
                     contentDescription = "Navigate Back",
                     onClick = onBack
+                )
+                Spacer(modifier = Modifier.width(spacing.s))
+            } else if (onOpenDrawer != null || drawerOpener != null) {
+                OS95IconButton(
+                    icon = Icons.Outlined.Menu,
+                    contentDescription = "Open Navigation Drawer",
+                    onClick = { (onOpenDrawer ?: drawerOpener)?.invoke() }
                 )
                 Spacer(modifier = Modifier.width(spacing.s))
             }
@@ -84,6 +102,10 @@ fun OS95TopBar(
             }
 
             actions()
+
+            if (overflowActions.isNotEmpty()) {
+                OS95OverflowMenu(actions = overflowActions)
+            }
         }
     }
 }

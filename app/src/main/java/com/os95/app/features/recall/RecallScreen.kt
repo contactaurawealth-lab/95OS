@@ -29,10 +29,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.automirrored.outlined.ShowChart
 import com.os95.app.core.ui.component.OS95Button
 import com.os95.app.core.ui.component.OS95Card
+import com.os95.app.core.ui.component.OS95DropdownSelector
 import com.os95.app.core.ui.component.OS95EmptyState
 import com.os95.app.core.ui.component.OS95LoadingState
+import com.os95.app.core.ui.component.OS95MenuAction
 import com.os95.app.core.ui.component.OS95OutlinedButton
 import com.os95.app.core.ui.component.OS95TopBar
 import com.os95.app.core.ui.theme.OS95Theme
@@ -60,7 +63,36 @@ fun RecallScreen(
         OS95TopBar(
             title = "Recall Engine",
             subtitle = "${uiState.dueCards.size} Due Today",
-            onBack = onNavigateBack
+            onBack = onNavigateBack,
+            overflowActions = listOfNotNull(
+                if (onNavigateToForgettingRadar != null) {
+                    OS95MenuAction(
+                        label = "Forgetting Radar",
+                        icon = Icons.AutoMirrored.Outlined.ShowChart,
+                        onClick = onNavigateToForgettingRadar
+                    )
+                } else null,
+                OS95MenuAction(
+                    label = "Review 5 Cards Blitz",
+                    isSelected = uiState.selectedPreset == RecallPreset.BLITZ,
+                    onClick = { viewModel.selectPreset(RecallPreset.BLITZ) }
+                ),
+                OS95MenuAction(
+                    label = "Review 10 Cards Focused",
+                    isSelected = uiState.selectedPreset == RecallPreset.FOCUSED,
+                    onClick = { viewModel.selectPreset(RecallPreset.FOCUSED) }
+                ),
+                OS95MenuAction(
+                    label = "Review 20 Cards Deep",
+                    isSelected = uiState.selectedPreset == RecallPreset.DEEP,
+                    onClick = { viewModel.selectPreset(RecallPreset.DEEP) }
+                ),
+                OS95MenuAction(
+                    label = "Review All Due Cards",
+                    isSelected = uiState.selectedPreset == RecallPreset.ALL_DUE,
+                    onClick = { viewModel.selectPreset(RecallPreset.ALL_DUE) }
+                )
+            )
         )
 
         if (uiState.isLoading) {
@@ -154,37 +186,22 @@ fun RecallScreen(
                 Spacer(modifier = Modifier.height(spacing.m))
             }
 
-            // Session Presets Selector
-            Text(
-                text = "Session Presets",
-                style = typography.caption,
-                color = colors.mutedText
-            )
-            Spacer(modifier = Modifier.height(spacing.xs))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                RecallPreset.values().forEach { preset ->
-                    val isSelected = uiState.selectedPreset == preset
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .defaultMinSize(minHeight = 44.dp)
-                            .clip(shapes.pill)
-                            .background(if (isSelected) colors.accent else colors.cardBackground)
-                            .clickable { viewModel.selectPreset(preset) }
-                            .padding(vertical = 8.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = preset.label,
-                            style = typography.caption,
-                            color = if (isSelected) colors.surface else colors.secondaryText
-                        )
+            // Session Presets Dropdown Selector
+            OS95DropdownSelector(
+                label = "Session Preset",
+                selectedValue = uiState.selectedPreset,
+                items = RecallPreset.values().toList(),
+                itemLabel = { preset ->
+                    when (preset) {
+                        RecallPreset.BLITZ -> "5 Blitz (Quick Recall)"
+                        RecallPreset.FOCUSED -> "10 Focused (Standard SM-2)"
+                        RecallPreset.DEEP -> "20 Deep (Retention Push)"
+                        RecallPreset.ALL_DUE -> "All Due (${uiState.dueCards.size} cards)"
                     }
-                }
-            }
+                },
+                onItemSelected = { viewModel.selectPreset(it) },
+                modifier = Modifier.fillMaxWidth()
+            )
 
             Spacer(modifier = Modifier.height(spacing.xl))
 

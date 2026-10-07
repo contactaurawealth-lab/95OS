@@ -40,6 +40,8 @@ import androidx.compose.ui.text.font.FontWeight
 import com.os95.app.core.audio.AcousticMode
 import com.os95.app.core.ui.component.OS95Button
 import com.os95.app.core.ui.component.OS95Card
+import com.os95.app.core.ui.component.OS95DropdownSelector
+import com.os95.app.core.ui.component.OS95MenuAction
 import com.os95.app.core.ui.component.OS95OutlinedButton
 import com.os95.app.core.ui.component.OS95TopBar
 import com.os95.app.core.ui.theme.OS95Theme
@@ -116,7 +118,28 @@ fun FocusScreen(
                 } else {
                     onNavigateBack()
                 }
-            }
+            },
+            overflowActions = listOf(
+                OS95MenuAction(
+                    label = "25m Sprint Preset",
+                    enabled = !uiState.isRunning,
+                    onClick = { viewModel.setDuration(25) }
+                ),
+                OS95MenuAction(
+                    label = "50m Study Preset",
+                    enabled = !uiState.isRunning,
+                    onClick = { viewModel.setDuration(50) }
+                ),
+                OS95MenuAction(
+                    label = "90m Exam Preset",
+                    enabled = !uiState.isRunning,
+                    onClick = { viewModel.setDuration(90) }
+                ),
+                OS95MenuAction(
+                    label = "Reset Timer",
+                    onClick = { viewModel.reset() }
+                )
+            )
         )
 
         Column(
@@ -179,61 +202,22 @@ fun FocusScreen(
 
             Spacer(modifier = Modifier.height(spacing.l))
 
-            // Procedural Offline Focus Acoustics
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Procedural Audio Ambience (100% Offline)",
-                        style = typography.caption,
-                        color = colors.mutedText
-                    )
-                    if (uiState.acousticMode != AcousticMode.OFF) {
-                        Text(
-                            text = uiState.acousticMode.displayName,
-                            style = typography.caption,
-                            color = colors.accent
-                        )
+            // Procedural Offline Focus Acoustics Dropdown Selector
+            OS95DropdownSelector(
+                label = "Procedural Audio Ambience (100% Offline)",
+                selectedValue = uiState.acousticMode,
+                items = AcousticMode.values().toList(),
+                itemLabel = { mode ->
+                    when (mode) {
+                        AcousticMode.OFF -> "Mute (Silent Focus)"
+                        AcousticMode.BROWNIAN -> "Brown Noise (${mode.description})"
+                        AcousticMode.PINK -> "Pink Noise (${mode.description})"
+                        AcousticMode.CLOCK_TICK -> "Exam Clock (${mode.description})"
                     }
-                }
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    AcousticMode.values().forEach { mode ->
-                        val isSelected = uiState.acousticMode == mode
-                        Surface(
-                            modifier = Modifier
-                                .defaultMinSize(minHeight = spacing.minTouchTarget)
-                                .clip(RoundedCornerShape(8.dp))
-                                .clickable { viewModel.setAcousticMode(mode) },
-                            shape = RoundedCornerShape(8.dp),
-                            color = if (isSelected) colors.accent else colors.surface,
-                            border = BorderStroke(1.dp, if (isSelected) colors.accent else colors.border)
-                        ) {
-                            Box(
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = mode.displayName,
-                                    style = typography.bodySmall,
-                                    color = if (isSelected) colors.surface else colors.primaryText,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                                )
-                            }
-                        }
-                    }
-                }
-            }
+                },
+                onItemSelected = { viewModel.setAcousticMode(it) },
+                modifier = Modifier.fillMaxWidth()
+            )
 
             Spacer(modifier = Modifier.height(spacing.l))
 

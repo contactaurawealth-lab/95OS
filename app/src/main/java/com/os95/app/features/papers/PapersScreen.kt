@@ -53,6 +53,7 @@ import com.os95.app.core.ui.component.OS95Dialog
 import com.os95.app.core.ui.component.OS95EmptyState
 import com.os95.app.core.ui.component.OS95IconButton
 import com.os95.app.core.ui.component.OS95LoadingState
+import com.os95.app.core.ui.component.OS95MenuAction
 import com.os95.app.core.ui.component.OS95OutlinedButton
 import com.os95.app.core.ui.component.OS95TextField
 import com.os95.app.core.ui.component.OS95TopBar
@@ -117,6 +118,25 @@ fun PapersScreen(
             title = "PaperPilot Hub",
             subtitle = "${uiState.papers.size} Practice Papers",
             onBack = onNavigateBack,
+            overflowActions = listOfNotNull(
+                OS95MenuAction(
+                    label = "Question Bank",
+                    icon = Icons.Outlined.QuestionAnswer,
+                    onClick = onNavigateToQuestionBank
+                ),
+                OS95MenuAction(
+                    label = "Create Practice Paper",
+                    icon = Icons.Outlined.Add,
+                    onClick = { showBuilderDialog = true }
+                ),
+                if (onNavigateToAnalysis != null) {
+                    OS95MenuAction(
+                        label = "Performance Analysis",
+                        icon = Icons.AutoMirrored.Outlined.ShowChart,
+                        onClick = onNavigateToAnalysis
+                    )
+                } else null
+            ),
             actions = {
                 OS95IconButton(
                     icon = Icons.Outlined.QuestionAnswer,

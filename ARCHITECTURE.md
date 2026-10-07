@@ -28,7 +28,7 @@ Local Device Storage
 ```
 App Root
 │
-├── Root Navigation (Primary Tabs & Drawer)
+├── Root Navigation (Primary Tabs & Side Bar Drawer)
 │   ├── Home (Command Center)
 │   ├── Syllabus (Subjects & Mastery)
 │   ├── Recall (Active Spaced Repetition)
@@ -36,29 +36,27 @@ App Root
 │   ├── Mistakes (Mistake Bank & Lost Marks)
 │   └── Progress (95% Engine & Analytics)
 │
-├── Secondary Navigation (Contextual Hierarchies)
-│   ├── Subject Navigation
-│   │   ├── Chapters
-│   │   ├── Topics
-│   │   └── Performance Breakdown
-│   │
-│   ├── Paper Navigation
-│   │   ├── Builder
-│   │   ├── Preview / Printable View
-│   │   ├── Exam Mode Lockdown
-│   │   └── Result Entry & Diagnostics
-│   │
-│   └── Recall Navigation
-│       ├── Due Today Queue
-│       ├── Active Review Session (SM-2)
-│       └── History & Card Management
+├── Advanced Exam Engines (Drawer Quick-Access)
+│   ├── Time-to-Marks Intel
+│   ├── Adaptive Re-Test
+│   ├── Exam Simulator
+│   └── Last-7-Days Mode
 │
-└── Modal / Utility Navigation
-    ├── Focus / Study Timer
-    ├── Universal CSV Import & Export
-    ├── Settings (Appearance, Study, Exam, Data, Privacy, About)
-    └── Confirmation & Diagnostic Dialogs
+├── High-Yield Reference Vaults (Drawer Quick-Access)
+│   ├── Formula Vault
+│   ├── T-3H Exam Day Protocol
+│   └── Focus Timer & Procedural Acoustics
+│
+├── System & Sovereignty (Drawer Quick-Access)
+│   ├── Data Portability (CSV & Markdown)
+│   └── Settings & Targets
+│
+└── Reusable Dropdown Menus & Selectors
+    ├── OS95DropdownMenu & OS95DropdownMenuItem (Obsidian styled M3 dropdown)
+    ├── OS95DropdownSelector<T> (Generic outlined picker with animated arrow toggle)
+    └── OS95OverflowMenu (3-dot vertical action list integrated with OS95TopBar)
 ```
+
 
 ---
 

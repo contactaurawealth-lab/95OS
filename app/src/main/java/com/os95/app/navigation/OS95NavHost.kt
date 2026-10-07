@@ -67,6 +67,16 @@ import com.os95.app.features.home.Last7DaysScreen
 import com.os95.app.features.home.Last7DaysViewModel
 import com.os95.app.features.formulas.FormulaVaultScreen
 import com.os95.app.features.formulas.FormulaVaultViewModel
+import androidx.compose.material.icons.outlined.Menu
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.rememberDrawerState
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import com.os95.app.core.ui.component.LocalDrawerOpener
+import com.os95.app.core.ui.component.OS95DrawerContent
 import com.os95.app.features.papers.ExamDayProtocolScreen
 
 @Composable
@@ -92,116 +102,159 @@ fun OS95App(
     val isOnboardingRoute = currentRoute == OS95Screen.Onboarding.route
     val showNavigationShell = !isOnboardingRoute
 
-    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
-        val isExpandedScreen = maxWidth >= 600.dp
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+    val profile by container.studentRepository.getProfileFlow().collectAsState(initial = null)
 
-        if (isExpandedScreen && showNavigationShell) {
-            // Tablet / Landscape layout with Navigation Rail
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(colors.background)
-            ) {
-                NavigationRail(
-                    containerColor = colors.surface,
-                    contentColor = colors.primaryText,
-                    modifier = Modifier.border(1.dp, colors.border),
-                    header = {
-                        Text(
-                            text = "95OS",
-                            style = typography.sectionTitle,
-                            color = colors.accentCyan,
-                            modifier = Modifier.padding(vertical = 16.dp)
-                        )
-                    }
-                ) {
-                    OS95RootNavigationItems.forEach { item ->
-                        val selected = currentRoute == item.route
-                        NavigationRailItem(
-                            selected = selected,
-                            onClick = {
-                                if (currentRoute != item.route) {
-                                    navController.navigate(item.route) {
-                                        popUpTo(OS95Screen.Home.route) { saveState = true }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
-                                }
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = item.icon,
-                                    contentDescription = item.title,
-                                    modifier = Modifier.size(22.dp)
-                                )
-                            },
-                            label = { Text(text = item.title, style = typography.caption) },
-                            colors = NavigationRailItemDefaults.colors(
-                                selectedIconColor = colors.accent,
-                                selectedTextColor = colors.accent,
-                                indicatorColor = colors.cardBackground,
-                                unselectedIconColor = colors.secondaryText,
-                                unselectedTextColor = colors.secondaryText
-                            )
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.weight(1f))
-
-                    OS95IconButton(
-                        icon = Icons.Outlined.Timer,
-                        contentDescription = "Focus Timer",
-                        onClick = { navController.navigate(OS95Screen.Focus.route) }
-                    )
-                    OS95IconButton(
-                        icon = Icons.Outlined.Settings,
-                        contentDescription = "Settings",
-                        onClick = { navController.navigate(OS95Screen.Settings.route) }
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
+    val navigateToRoute: (String) -> Unit = { route ->
+        scope.launch { drawerState.close() }
+        if (currentRoute != route) {
+            val isTargetRoot = OS95RootNavigationItems.any { it.route == route }
+            if (isTargetRoot) {
+                navController.navigate(route) {
+                    popUpTo(OS95Screen.Home.route) { saveState = true }
+                    launchSingleTop = true
+                    restoreState = true
                 }
+            } else {
+                navController.navigate(route) {
+                    launchSingleTop = true
+                }
+            }
+        }
+    }
 
-                Box(modifier = Modifier.weight(1f)) {
-                    OS95NavGraph(
-                        navController = navController,
-                        container = container,
-                        startDestination = startDestination
+    CompositionLocalProvider(
+        LocalDrawerOpener provides {
+            scope.launch {
+                if (drawerState.isClosed) drawerState.open() else drawerState.close()
+            }
+        }
+    ) {
+        ModalNavigationDrawer(
+            drawerState = drawerState,
+            gesturesEnabled = showNavigationShell,
+            drawerContent = {
+                if (showNavigationShell) {
+                    val targetInfo = listOfNotNull(
+                        profile?.gradeLevel?.takeIf { it.isNotBlank() },
+                        profile?.division?.takeIf { it.isNotBlank() }
+                    ).joinToString(" • ").ifBlank { null }
+
+                    OS95DrawerContent(
+                        currentRoute = currentRoute,
+                        studentName = profile?.name ?: "",
+                        targetScorePercentage = profile?.targetPercentage ?: 95f,
+                        targetExam = targetInfo,
+                        onNavigate = navigateToRoute,
+                        onClose = { scope.launch { drawerState.close() } }
                     )
                 }
             }
-        } else {
-            // Mobile layout with Bottom Bar
-            Scaffold(
-                modifier = Modifier.fillMaxSize(),
-                containerColor = colors.background,
-                bottomBar = {
-                    if (showNavigationShell && isRootRoute) {
-                        OS95BottomBar(
-                            items = OS95RootNavigationItems,
-                            currentRoute = currentRoute,
-                            onNavigate = { route ->
-                                if (currentRoute != route) {
-                                    navController.navigate(route) {
-                                        popUpTo(OS95Screen.Home.route) { saveState = true }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
-                                }
+        ) {
+            BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+                val isExpandedScreen = maxWidth >= 600.dp
+
+                if (isExpandedScreen && showNavigationShell) {
+                    // Tablet / Landscape layout with Navigation Rail
+                    Row(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(colors.background)
+                    ) {
+                        NavigationRail(
+                            containerColor = colors.surface,
+                            contentColor = colors.primaryText,
+                            modifier = Modifier.border(1.dp, colors.border),
+                            header = {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                OS95IconButton(
+                                    icon = Icons.Outlined.Menu,
+                                    contentDescription = "Open Full Academic Drawer",
+                                    onClick = { scope.launch { drawerState.open() } }
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "95OS",
+                                    style = typography.caption.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Bold),
+                                    color = colors.accentCyan
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
                             }
-                        )
+                        ) {
+                            OS95RootNavigationItems.forEach { item ->
+                                val selected = currentRoute == item.route
+                                NavigationRailItem(
+                                    selected = selected,
+                                    onClick = { navigateToRoute(item.route) },
+                                    icon = {
+                                        Icon(
+                                            imageVector = item.icon,
+                                            contentDescription = item.title,
+                                            modifier = Modifier.size(22.dp)
+                                        )
+                                    },
+                                    label = { Text(text = item.title, style = typography.caption) },
+                                    colors = NavigationRailItemDefaults.colors(
+                                        selectedIconColor = colors.accent,
+                                        selectedTextColor = colors.accent,
+                                        indicatorColor = colors.cardBackground,
+                                        unselectedIconColor = colors.secondaryText,
+                                        unselectedTextColor = colors.secondaryText
+                                    )
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.weight(1f))
+
+                            OS95IconButton(
+                                icon = Icons.Outlined.Timer,
+                                contentDescription = "Focus Timer",
+                                onClick = { navController.navigate(OS95Screen.Focus.route) }
+                            )
+                            OS95IconButton(
+                                icon = Icons.Outlined.Settings,
+                                contentDescription = "Settings",
+                                onClick = { navController.navigate(OS95Screen.Settings.route) }
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
+
+                        Box(modifier = Modifier.weight(1f)) {
+                            OS95NavGraph(
+                                navController = navController,
+                                container = container,
+                                startDestination = startDestination
+                            )
+                        }
                     }
-                }
-            ) { innerPadding ->
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                ) {
-                    OS95NavGraph(
-                        navController = navController,
-                        container = container,
-                        startDestination = startDestination
-                    )
+                } else {
+                    // Mobile layout with Bottom Bar
+                    Scaffold(
+                        modifier = Modifier.fillMaxSize(),
+                        containerColor = colors.background,
+                        bottomBar = {
+                            if (showNavigationShell && isRootRoute) {
+                                OS95BottomBar(
+                                    items = OS95RootNavigationItems,
+                                    currentRoute = currentRoute,
+                                    onNavigate = { route -> navigateToRoute(route) }
+                                )
+                            }
+                        }
+                    ) { innerPadding ->
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(innerPadding)
+                        ) {
+                            OS95NavGraph(
+                                navController = navController,
+                                container = container,
+                                startDestination = startDestination
+                            )
+                        }
+                    }
                 }
             }
         }

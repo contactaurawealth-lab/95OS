@@ -11,6 +11,16 @@
 - [ ] (No open bugs)
 
 # Completed
+- [x] Side Bar (Global Navigation Drawer) & Dropdown Menu System Architecture:
+  - Built `OS95Dropdowns.kt` design system components: `OS95DropdownMenu`, `OS95DropdownMenuItem`, generic `OS95DropdownSelector<T>`, and `OS95OverflowMenu`.
+  - Built `OS95NavigationDrawer.kt` with categorized sections: Core Exam Loop, Advanced Exam Engines, High-Yield Vaults, and System & Sovereignty tools, featuring live student profile status, target badge, and 100% offline indicator.
+  - Wired `ModalNavigationDrawer` into `OS95NavHost.kt` with global `LocalDrawerOpener` composition local and edge-swipe gesture support across phones and tablets.
+  - Integrated `OS95TopBar` hamburger menu icon and overflow actions across all root and secondary screens.
+  - Upgraded `QuestionBankScreen.kt` with dual dropdown selectors for Subject and Difficulty filters, replacing cramped horizontal chip scrolling.
+  - Upgraded `RecallScreen.kt` with dropdown selector for session review presets (Blitz, Focused, Deep, All Due) and quick-action overflow menu.
+  - Upgraded `FocusScreen.kt` with dropdown selector for Procedural Audio Ambience profiles (Mute, Brown Noise, Pink Noise, Exam Clock) and timer duration presets.
+  - Upgraded `PapersScreen.kt`, `HomeScreen.kt`, and `ProgressScreen.kt` with contextual 3-dot overflow menus and quick navigation actions.
+  - Added unit test suite `DrawerAndDropdownNavigationTest.kt` verifying section integrity, route uniqueness, and menu action execution.
 - [x] UI / UX / System Audit Resolution (Phase 1, 2 & 3): Resolved all 15 audit issues across the 95OS offline suite:
   - Fixed non-functional creation dialogs in Syllabus (`SyllabusScreens.kt`) with interactive text fields for Subject, Chapter, and Topic (with exam weightage selection chips).
   - Resolved Question Bank and Mistake Bank dialogs with complete multi-selection forms and foreign-key safety against `SQLiteConstraintException` (`QuestionBankScreen.kt`, `MistakesScreen.kt`).

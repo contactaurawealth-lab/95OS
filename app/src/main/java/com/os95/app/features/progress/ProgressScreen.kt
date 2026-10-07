@@ -49,6 +49,7 @@ import com.os95.app.core.ui.component.OS95Card
 import com.os95.app.core.ui.component.OS95Dialog
 import com.os95.app.core.ui.component.OS95EmptyState
 import com.os95.app.core.ui.component.OS95LoadingState
+import com.os95.app.core.ui.component.OS95MenuAction
 import com.os95.app.core.ui.component.OS95OutlinedButton
 import com.os95.app.core.ui.component.OS95ProgressBar
 import com.os95.app.core.ui.component.OS95TopBar
@@ -85,7 +86,28 @@ fun ProgressScreen(
         OS95TopBar(
             title = "Marks Recovery Engine",
             subtitle = "Target: ${uiState.targetPercentage.toInt()}%",
-            onBack = onNavigateBack
+            onBack = onNavigateBack,
+            overflowActions = listOf(
+                OS95MenuAction(
+                    label = "15-Min Rescue Sprint",
+                    onClick = {
+                        selectedRescueDuration = 15
+                        showRescueDialog = true
+                    }
+                ),
+                OS95MenuAction(
+                    label = "Recall Spaced Review",
+                    onClick = onNavigateToRecall
+                ),
+                OS95MenuAction(
+                    label = "Practice Papers Analysis",
+                    onClick = onNavigateToPapers
+                ),
+                OS95MenuAction(
+                    label = "Mistake Bank Remediation",
+                    onClick = onNavigateToMistakes
+                )
+            )
         )
 
         if (uiState.isLoading || uiState.snapshot == null) {

@@ -39,6 +39,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.outlined.FileDownload
+import androidx.compose.material.icons.outlined.Refresh
+import com.os95.app.core.database.entity.SubjectEntity
+import com.os95.app.core.ui.component.OS95DropdownSelector
+import com.os95.app.core.ui.component.OS95MenuAction
 import com.os95.app.core.ui.component.OS95Card
 import com.os95.app.core.ui.component.OS95Dialog
 import com.os95.app.core.ui.component.OS95EmptyState
@@ -90,14 +95,25 @@ fun QuestionBankScreen(
             title = "Question Bank",
             subtitle = "${uiState.filteredQuestions.size} Questions",
             onBack = onNavigateBack,
-            actions = {
+            overflowActions = listOfNotNull(
                 if (onNavigateToCsvImport != null) {
-                    OS95IconButton(
-                        icon = androidx.compose.material.icons.Icons.Outlined.Description,
-                        contentDescription = "Import CSV",
+                    OS95MenuAction(
+                        label = "Import CSV",
+                        icon = Icons.Outlined.FileDownload,
                         onClick = onNavigateToCsvImport
                     )
-                }
+                } else null,
+                OS95MenuAction(
+                    label = "Reset All Filters",
+                    icon = Icons.Outlined.Refresh,
+                    onClick = {
+                        viewModel.setSubjectFilter(null)
+                        viewModel.setDifficultyFilter(null)
+                        viewModel.setSearchQuery("")
+                    }
+                )
+            ),
+            actions = {
                 OS95IconButton(
                     icon = Icons.Outlined.Add,
                     contentDescription = "Add Question",
@@ -106,7 +122,7 @@ fun QuestionBankScreen(
             }
         )
 
-        // Search Bar & Filters
+        // Search Bar & Dropdown Selectors
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -121,32 +137,38 @@ fun QuestionBankScreen(
 
             Spacer(modifier = Modifier.height(spacing.s))
 
-            // Difficulty filter pills
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                val difficulties = listOf(null to "All", "EASY" to "Easy", "MEDIUM" to "Medium", "HARD" to "Hard")
-                difficulties.forEach { (diff, label) ->
-                    val isSelected = uiState.selectedDifficulty == diff
-                    Box(
-                        modifier = Modifier
-                            .defaultMinSize(minHeight = 44.dp)
-                            .clip(shapes.pill)
-                            .background(if (isSelected) colors.accent else colors.cardBackground)
-                            .clickable { viewModel.setDifficultyFilter(diff) }
-                            .padding(horizontal = 14.dp, vertical = 6.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = label,
-                            style = typography.caption,
-                            color = if (isSelected) colors.surface else colors.secondaryText
-                        )
-                    }
-                }
+                val allSubjectsList: List<SubjectEntity?> = listOf(null) + uiState.subjects
+                val selectedSubject = uiState.subjects.find { it.id == uiState.selectedSubjectId }
+
+                OS95DropdownSelector(
+                    label = "Subject",
+                    selectedValue = selectedSubject,
+                    items = allSubjectsList,
+                    itemLabel = { it?.name ?: "All Subjects" },
+                    onItemSelected = { viewModel.setSubjectFilter(it?.id) },
+                    modifier = Modifier.weight(1f)
+                )
+
+                val difficulties = listOf(null, "EASY", "MEDIUM", "HARD")
+                OS95DropdownSelector(
+                    label = "Difficulty",
+                    selectedValue = uiState.selectedDifficulty,
+                    items = difficulties,
+                    itemLabel = {
+                        when (it) {
+                            "EASY" -> "Easy"
+                            "MEDIUM" -> "Medium"
+                            "HARD" -> "Hard"
+                            else -> "All Levels"
+                        }
+                    },
+                    onItemSelected = { viewModel.setDifficultyFilter(it) },
+                    modifier = Modifier.weight(1f)
+                )
             }
         }
 
